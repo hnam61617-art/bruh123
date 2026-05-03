@@ -1,43 +1,44 @@
--- ==========================================
--- 1. KHỞI TẠO GIAO DIỆN (FLUENT UI)
--- ==========================================
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
 local Window = Fluent:CreateWindow({
-    Title = "Ascended Hub - Auto Fish & Sam",
-    SubTitle = "Delta Optimized",
+    Title = "Gemini Hub - Auto Farm",
+    SubTitle = "BETA - Đầy đủ Logic",
     TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
+    Size = UDim2.fromOffset(480, 350),
     Acrylic = true,
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.RightControl
+    Theme = "Dark"
 })
 
 local Tabs = {
-    FarmTab = Window:AddTab({ Title = "Farm & Sam", Icon = "swords" })
+    FarmTab = Window:AddTab({ Title = "Main Farm", Icon = "rbxassetid://4483345998" }),
+    SamTab = Window:AddTab({ Title = "Sam Quest", Icon = "rbxassetid://4483345998" })
 }
 
--- ==========================================
--- 2. CÁC HÀM HỖ TRỢ (SAFE TWEEN, CHAR OK)
--- ==========================================
+-- [ VARIABLES & SERVICES ]
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local AutoFish = false
+local FishBlock = nil
+local AutoSam = false
+local AutoClaimCompass = false
+
+getgenv()._safeTweenBusy = false
+getgenv().TweenSettings = {
+    MaxSpeed = 250,
+    MinTweenTime = 0.2,
+    MaxTweenTime = 15,
+    RandomDelay = { Min = 0, Max = 0 }
+}
+
+-- [ CORE UTILITIES ]
 local function charOk()
-    local char = game.Players.LocalPlayer.Character
+    local char = LocalPlayer.Character
     return char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") and char
 end
 
-local function disableCollision(model)
-    if not model then return end
-    for _, part in ipairs(model:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
-    end
-end
-
-getgenv().TweenSettings = { MaxSpeed = 250, MinTweenTime = 0.25, MaxTweenTime = 3, RandomDelay = { Min = 0, Max = 0 } }
-getgenv()._safeTweenBusy = false
-
-function SafeTween(goalPos, clickRadius)
+local function SafeTween(goalPos, clickRadius)
     local char = charOk()
     if not char then return false end
     local hrp = char.HumanoidRootPart
@@ -50,7 +51,7 @@ function SafeTween(goalPos, clickRadius)
     local speed = cfg.MaxSpeed or 250
     local tweenTime = math.clamp(distance / speed, cfg.MinTweenTime, cfg.MaxTweenTime)
 
-    local tween = game:GetService("TweenService"):Create(hrp, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
+    local tween = TweenService:Create(hrp, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
         CFrame = CFrame.new(goalPos)
     })
     tween:Play()
@@ -74,188 +75,319 @@ function SafeTween(goalPos, clickRadius)
     return true
 end
 
--- ==========================================
--- 3. LOGIC FARM (CÂU CÁ & BÁN CÁ + TÌM SAM)
--- ==========================================
-local FishBlock = nil
+-- [ LOGIC: AUTO FISH (Nguyên bản + Merchant) ]
+local function DoFishQuest()
+    if not FishBlock then return end
+    local char = charOk()
+    if not char then return end
+    
+    local hrp = char.HumanoidRootPart
+    local targetPos = FishBlock.Position + Vector3.new(0, 3, 0)
 
-Tabs.FarmTab:AddToggle("ToggleAutoFishSam", {
-    Title = "Auto Fish & Sam (Priority)",
-    Description = "Ưu tiên nhặt SAM 1500m. Hết la bàn sẽ đi câu & bán cá.",
-    Default = false,
-    Callback = function(state)
-        getgenv().AutoFarm = state
+    -- Quay về bục câu cá nếu đang ở xa
+    if (hrp.Position - targetPos).Magnitude > 5 then
+        SafeTween(targetPos, 0)
+    end
 
-        if state then
-            if not FishBlock then
-                FishBlock = Instance.new("Part")
-                FishBlock.Name = "FishFarmPlatform"
-                FishBlock.Anchored = true
-                FishBlock.Size = Vector3.new(2.5, 1, 2.5)
-                FishBlock.Material = Enum.Material.Plastic
-                FishBlock.BrickColor = BrickColor.new("Medium stone grey")
-                FishBlock.CFrame = CFrame.new(-20000, 211, 20000)
-                FishBlock.Parent = workspace
+    -- Equip rod tự động
+    for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, "Rod") then
+            char.Humanoid:EquipTool(tool)
+            break
+        end
+    end
+
+    local rod
+    for _, tool in pairs(char:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, "Rod") and tool:FindFirstChild("Click") then
+            rod = tool
+            break
+        end
+    end
+    if not rod then return end
+
+    -- Detect bobber
+    local bobber
+    for _, desc in pairs(rod:GetDescendants()) do
+        if desc.Name == "Bobber" and desc:FindFirstChild("Effect") then
+            bobber = desc
+            break
+        end
+    end
+
+    if not bobber then
+        rod.Click:FireServer(hrp.Position)
+        return
+    end
+
+    -- Kéo cá & Trả Merchant
+    if bobber.Effect.Enabled then
+        task.wait(0.6)
+        rod.Click:FireServer(hrp.Position)
+
+        local retum = workspace:FindFirstChild("Merchants")
+            and workspace.Merchants:FindFirstChild("FishMerchant")
+            and workspace.Merchants.FishMerchant:FindFirstChild("Clickable")
+            and workspace.Merchants.FishMerchant.Clickable:FindFirstChild("Retum")
+
+        if retum then
+            local npc = workspace.Merchants.FishMerchant
+            local npcHrp = npc:FindFirstChild("HumanoidRootPart")
+            if npcHrp then
+                local pos = npcHrp.Position + (npcHrp.CFrame.LookVector * -3)
+                pos = Vector3.new(pos.X, npcHrp.Position.Y, pos.Z)
+                SafeTween(pos, 0)
+                hrp.CFrame = CFrame.new(hrp.Position, npcHrp.Position)
+                task.wait(0.2)
+                retum:FireServer()
+            end
+        end
+    end
+end
+
+-- [ LOGIC: AUTO SAM (Bay 1200m -> Rớt 5 stud) ]
+local function DoSamQuest(compass)
+    local char = charOk()
+    if not char then return end
+    local hrp = char.HumanoidRootPart
+
+    -- Equip compass
+    compass.Parent = char
+    local arrow = compass:WaitForChild("CompassArrow", 5)
+    if not arrow then return end
+
+    -- Tắt va chạm
+    local originalCanCollide = {}
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            originalCanCollide[part] = part.CanCollide
+            part.CanCollide = false
+        end
+    end
+
+    local function restoreCollisions()
+        for part, collide in pairs(originalCanCollide) do
+            if part then part.CanCollide = collide end
+        end
+    end
+
+    -- Khóa trọng lực
+    local originalGravity = workspace.Gravity
+    workspace.Gravity = 0
+    local gravityConnection = workspace:GetPropertyChangedSignal("Gravity"):Connect(function()
+        if workspace.Gravity ~= 0 then workspace.Gravity = 0 end
+    end)
+
+    local function resetGravity()
+        if gravityConnection then gravityConnection:Disconnect() end
+        workspace.Gravity = originalGravity
+    end
+
+    local diedConn = char:WaitForChild("Humanoid").Died:Connect(function()
+        resetGravity()
+        restoreCollisions()
+    end)
+
+    -- Kích hoạt la bàn
+    if arrow.Transparency == 1 then
+        compass:Activate()
+    end
+    arrow:GetPropertyChangedSignal("Transparency"):Connect(function()
+        if arrow.Transparency == 1 and char:FindFirstChild("Compass") then
+            compass:Activate()
+        end
+    end)
+
+    -- BƯỚC 1: BAY LÊN 1200 MÉT
+    local skyY = 1200
+    SafeTween(Vector3.new(hrp.Position.X, skyY, hrp.Position.Z))
+
+    -- BƯỚC 2: DI CHUYỂN TRÊN TRỜI
+    local stepDistance = 30
+    local tweenTime = 0.2
+    local repeatCount = 500
+    local smoothFactor = 0.25
+    local lastLookVector = nil
+    local sharpTurnDetected = false
+    local sharpTurnPos = nil
+
+    local currentPos = hrp.Position
+
+    for i = 1, repeatCount do
+        if not AutoSam or sharpTurnDetected then break end
+        if not char:FindFirstChild("Compass") then break end -- Mất la bàn -> Dừng
+        if not arrow or not arrow:FindFirstChildWhichIsA("Weld") then break end
+
+        local weld = arrow:FindFirstChildWhichIsA("Weld")
+        local arrowCFrame = weld.Part0.CFrame * weld.C0 * weld.C1:Inverse() * CFrame.Angles(-math.rad(90), 0, 0)
+        local rawLook = Vector3.new(arrowCFrame.LookVector.X, 0, arrowCFrame.LookVector.Z).Unit
+
+        -- Detect sharp turn (Vượt qua mục tiêu)
+        if lastLookVector then
+            local dotProduct = math.clamp(lastLookVector:Dot(rawLook), -1, 1)
+            local angleDiff = math.acos(dotProduct)
+            if angleDiff > math.rad(120) then
+                sharpTurnDetected = true
+                sharpTurnPos = hrp.Position
+                break
+            end
+        end
+
+        local moveLook = rawLook
+        if lastLookVector then
+            moveLook = (lastLookVector * (1 - smoothFactor) + rawLook * smoothFactor).Unit
+        end
+        lastLookVector = rawLook
+
+        -- Giữ nguyên Y = 1200
+        currentPos = currentPos + (moveLook * stepDistance)
+        currentPos = Vector3.new(currentPos.X, skyY, currentPos.Z)
+        local destCFrame = CFrame.new(currentPos, currentPos + moveLook)
+
+        local tween = TweenService:Create(hrp, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = destCFrame})
+        tween:Play()
+        tween.Completed:Wait()
+    end
+
+    -- BƯỚC 3 & 4: HẠ XUỐNG 5 STUD SO VỚI MẶT ĐẤT VÀ TÌM TREES SPAWNER
+    if sharpTurnDetected and sharpTurnPos then
+        -- Dùng Raycast để đo khoảng cách từ độ cao 1200m xuống mặt đất
+        local rayOrigin = Vector3.new(sharpTurnPos.X, skyY, sharpTurnPos.Z)
+        local rayDirection = Vector3.new(0, -2000, 0)
+        local rayParams = RaycastParams.new()
+        rayParams.FilterDescendantsInstances = {char}
+        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+        local raycastResult = workspace:Raycast(rayOrigin, rayDirection, rayParams)
+        local groundY = 215 -- Giá trị mặc định nếu không raycast được
+        if raycastResult then
+            groundY = raycastResult.Position.Y
+        end
+
+        -- Rớt xuống cách mặt đất 5 stud
+        SafeTween(Vector3.new(sharpTurnPos.X, groundY + 5, sharpTurnPos.Z))
+        task.wait(0.2)
+
+        -- Tìm Spawner cuối cùng
+        while AutoSam and char:FindFirstChild("Compass") do
+            for _, tree in pairs(workspace.Trees:GetChildren()) do
+                if tree:FindFirstChild("Spawner") then
+                    local spawner = tree.Spawner
+                    local dist = (spawner.Position - hrp.Position).Magnitude
+                    if dist < 100 then -- Nới lỏng range 1 chút vì đang lơ lửng trên 5 stud
+                        hrp.CFrame = spawner.CFrame
+                        task.wait(0.5)
+                    end
+                end
+            end
+            task.wait(0.5)
+        end
+    end
+
+    -- Hoàn tất / Clean up
+    if diedConn then diedConn:Disconnect() end
+    resetGravity()
+    restoreCollisions()
+end
+
+-- [ MASTER LOOP (Hệ thống Ưu tiên) ]
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        pcall(function()
+            -- 1. Ưu tiên kiểm tra Sam
+            if AutoSam then
+                local compass = LocalPlayer.Backpack:FindFirstChild("Compass") or (charOk() and charOk():FindFirstChild("Compass"))
+                if compass then
+                    DoSamQuest(compass)
+                    return -- Return để bỏ qua code Fish bên dưới, ưu tiên hoàn thành Sam
+                else
+                    if workspace.Gravity ~= 196.2 then workspace.Gravity = 196.2 end
+                end
             end
 
-            task.spawn(function()
-                local oldGrav = workspace.Gravity
-                local isHuntingSam = false -- ĐÂY LÀ BIẾN FIX LỖI LƠ LỬNG
+            -- 2. Đã xong Sam (hoặc không bật Sam/Không có la bàn) -> Câu cá
+            if AutoFish then
+                DoFishQuest()
+            end
+        end)
+    end
+end)
 
-                local nc
-                nc = game:GetService("RunService").Stepped:Connect(function()
-                    if not getgenv().AutoFarm then nc:Disconnect() return end
-                    
-                    -- CHỈ BẬT ĐI XUYÊN TƯỜNG (NOCLIP) KHI BAY TÌM SAM
-                    if isHuntingSam then
-                        local char = charOk()
-                        if char then disableCollision(char) end 
-                    end
-                end)
-                
-                local height = 1500
-                local stepDist = 35
-                local lastLook = nil
-
-                while getgenv().AutoFarm do
-                    task.wait(0.5)
-                    
-                    pcall(function()
-                        local char = charOk() 
-                        if not char then return end
-                        local hrp = char.HumanoidRootPart
-                        local LocalPlayer = game.Players.LocalPlayer
-
-                        local compass = LocalPlayer.Backpack:FindFirstChild("Compass") or char:FindFirstChild("Compass")
-                        
-                        if compass then
-                            -- ==============================
-                            -- LOGIC ĐI TÌM SAM
-                            -- ==============================
-                            isHuntingSam = true -- Đang tìm SAM -> Cho phép lơ lửng và bay
-                            workspace.Gravity = 0
-
-                            compass.Parent = char
-                            
-                            if hrp.Position.Y < 1400 then
-                                hrp.CFrame = CFrame.new(hrp.Position.X, height, hrp.Position.Z)
-                                task.wait(0.5)
-                            end
-
-                            local arrow = compass:FindFirstChild("CompassArrow")
-                            local weld = arrow and arrow:FindFirstChildWhichIsA("Weld")
-                            
-                            if weld then
-                                local arrowCF = weld.Part0.CFrame * weld.C0 * weld.C1:Inverse() * CFrame.Angles(-math.rad(90), 0, 0)
-                                local look = Vector3.new(arrowCF.LookVector.X, 0, arrowCF.LookVector.Z).Unit
-
-                                if lastLook then
-                                    local angle = math.acos(math.clamp(lastLook:Dot(look), -1, 1))
-                                    if angle > math.rad(120) then
-                                        local landPos = CFrame.new(hrp.Position.X, 15, hrp.Position.Z)
-                                        
-                                        if workspace:FindFirstChild("Trees") then
-                                            for _, t in pairs(workspace.Trees:GetChildren()) do
-                                                local s = t:FindFirstChild("Spawner")
-                                                if s and (Vector2.new(s.Position.X, s.Position.Z) - Vector2.new(hrp.Position.X, hrp.Position.Z)).Magnitude < 100 then
-                                                    landPos = s.CFrame
-                                                    break
-                                                end
-                                            end
-                                        end
-                                        
-                                        hrp.CFrame = landPos
-                                        task.wait(3) 
-                                        hrp.CFrame = CFrame.new(hrp.Position.X, height, hrp.Position.Z) 
-                                        lastLook = nil
-                                    end
-                                end
-
-                                lastLook = look
-                                local nextP = hrp.Position + (look * stepDist)
-                                hrp.CFrame = CFrame.new(Vector3.new(nextP.X, height, nextP.Z), Vector3.new(nextP.X, height, nextP.Z) + look)
-                            end
-                        else
-                            -- ==============================
-                            -- LOGIC CÂU CÁ & BÁN CÁ
-                            -- ==============================
-                            isHuntingSam = false -- Hết tìm SAM -> Tắt NoClip
-                            workspace.Gravity = 196.2 -- TRẢ LẠI TRỌNG LỰC ĐỂ RƠI XUỐNG BỆ
-
-                            if not FishBlock then return end
-                            local targetPos = FishBlock.Position + Vector3.new(0, 3, 0)
-
-                            if (hrp.Position - targetPos).Magnitude > 5 then
-                                SafeTween(targetPos, 0)
-                            end
-
-                            for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-                                if tool:IsA("Tool") and string.find(tool.Name, "Rod") then
-                                    char.Humanoid:EquipTool(tool)
-                                    break
-                                end
-                            end
-
-                            local rod
-                            for _, tool in pairs(char:GetChildren()) do
-                                if tool:IsA("Tool") and string.find(tool.Name, "Rod") and tool:FindFirstChild("Click") then
-                                    rod = tool
-                                    break
-                                end
-                            end
-                            if not rod then return end
-
-                            local bobber
-                            for _, desc in pairs(rod:GetDescendants()) do
-                                if desc.Name == "Bobber" and desc:FindFirstChild("Effect") then
-                                    bobber = desc
-                                    break
-                                end
-                            end
-
-                            if not bobber then
-                                rod.Click:FireServer(hrp.Position)
-                                return
-                            end
-
-                            if bobber.Effect.Enabled then
-                                task.wait(0.6)
-                                rod.Click:FireServer(hrp.Position)
-
-                                local retum = workspace:FindFirstChild("Merchants")
-                                    and workspace.Merchants:FindFirstChild("FishMerchant")
-                                    and workspace.Merchants.FishMerchant:FindFirstChild("Clickable")
-                                    and workspace.Merchants.FishMerchant.Clickable:FindFirstChild("Retum")
-
-                                if retum then
-                                    local npc = workspace.Merchants.FishMerchant
-                                    local npcHrp = npc:FindFirstChild("HumanoidRootPart")
-                                    if npcHrp then
-                                        local pos = npcHrp.Position + (npcHrp.CFrame.LookVector * -3)
-                                        pos = Vector3.new(pos.X, npcHrp.Position.Y, pos.Z)
-                                        SafeTween(pos, 0) 
-                                        hrp.CFrame = CFrame.new(hrp.Position, npcHrp.Position)
-                                        task.wait(0.2)
-                                        retum:FireServer()
-                                    end
-                                end
-                            end
-                        end
-                    end)
-                end
-                
-                workspace.Gravity = oldGrav
-                if nc then nc:Disconnect() end
+-- [ AUTO CLAIM COMPASS LOOP ]
+task.spawn(function()
+    while task.wait(5) do
+        if AutoClaimCompass then
+            pcall(function()
+                ReplicatedStorage:WaitForChild("Connections"):WaitForChild("Claim_Sam"):FireServer("Claim1")
             end)
-        else
-            workspace.Gravity = 196.2
-            if FishBlock then
-                FishBlock:Destroy()
-                FishBlock = nil
+        end
+    end
+end)
+
+-- [ UI TABS SETUP ]
+-- Tab Farm (Câu cá)
+Tabs.FarmTab:AddToggle("ToggleAutoFish", {
+    Title = "Auto Fish Farm",
+    Description = "Sẽ tự câu cá nếu không có Compass",
+    Default = false,
+    Callback = function(state)
+        AutoFish = state
+        if AutoFish and not FishBlock then
+            FishBlock = Instance.new("Part")
+            FishBlock.Name = "FishFarmPlatform"
+            FishBlock.Anchored = true
+            FishBlock.Size = Vector3.new(2.5, 1, 2.5)
+            FishBlock.Material = Enum.Material.Plastic
+            FishBlock.BrickColor = BrickColor.new("Medium stone grey")
+            FishBlock.CFrame = CFrame.new(-20000, 211, 20000)
+            FishBlock.Parent = workspace
+        elseif not AutoFish and FishBlock then
+            FishBlock:Destroy()
+            FishBlock = nil
+        end
+    end
+})
+
+-- Tab Sam (La bàn)
+Tabs.SamTab:AddToggle("ToggleCompassFarm", {
+    Title = "Auto Find Compass (BETA)",
+    Description = "Ưu tiên: Bay 1200m -> Rớt 5 stud",
+    Default = false,
+    Callback = function(state)
+        AutoSam = state
+        if not state then
+            if workspace.Gravity ~= 196.2 then workspace.Gravity = 196.2 end
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = true end
+                end
             end
         end
     end
 })
 
-Window:SelectTab(1)
-Fluent:Notify({Title = "Thành công", Content = "Đã fix lỗi lơ lửng. Script tải xong!", Duration = 5})
+Tabs.SamTab:AddToggle("AutoClaimCompass", {
+    Title = "Auto Claim Compass",
+    Default = false,
+    Callback = function(state)
+        AutoClaimCompass = state
+    end
+})
+
+local Section = Tabs.SamTab:AddSection("Manual Claims")
+Tabs.SamTab:AddButton({
+    Title = "Claim One Compass",
+    Callback = function()
+        ReplicatedStorage:WaitForChild("Connections"):WaitForChild("Claim_Sam"):FireServer("Claim1")
+    end
+})
+Tabs.SamTab:AddButton({
+    Title = "Claim All Compasses",
+    Callback = function()
+        ReplicatedStorage:WaitForChild("Connections"):WaitForChild("Claim_Sam"):FireServer("Claim10")
+    end
+})
+
+Fluent:Notify({ Title = "Gemini Hub", Content = "Đã load đầy đủ Logic Ưu tiên & Bay cao!", Duration = 5 })
