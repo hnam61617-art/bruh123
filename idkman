@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local Window = Fluent:CreateWindow({
     Title = "Gemini Hub - Auto Farm",
-    SubTitle = "Event-Based Logic",
+    SubTitle = "Optimized Sam Path",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 350),
     Acrylic = true,
@@ -29,12 +29,6 @@ local isWaitingForSam = false
 local isDoingSam = false
 
 getgenv()._safeTweenBusy = false
-getgenv().TweenSettings = {
-    MaxSpeed = 250,
-    MinTweenTime = 0.2,
-    MaxTweenTime = 15,
-    RandomDelay = { Min = 0, Max = 0 }
-}
 
 -- [ CORE UTILITIES ]
 local function charOk()
@@ -42,7 +36,7 @@ local function charOk()
     return char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") and char
 end
 
-local function SafeTween(goalPos, clickRadius)
+local function SafeTween(goalPos)
     local char = charOk()
     if not char then return false end
     local hrp = char.HumanoidRootPart
@@ -51,29 +45,14 @@ local function SafeTween(goalPos, clickRadius)
     getgenv()._safeTweenBusy = true
 
     local distance = (hrp.Position - goalPos).Magnitude
-    local cfg = getgenv().TweenSettings
-    local speed = cfg.MaxSpeed or 250
-    local tweenTime = math.clamp(distance / speed, cfg.MinTweenTime, cfg.MaxTweenTime)
+    local speed = 250
+    local tweenTime = math.clamp(distance / speed, 0.2, 15)
 
     local tween = TweenService:Create(hrp, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
         CFrame = CFrame.new(goalPos)
     })
     tween:Play()
     tween.Completed:Wait()
-
-    local rd = cfg.RandomDelay
-    task.wait((rd.Min or 0) + math.random() * ((rd.Max or 0) - (rd.Min or 0)))
-
-    if clickRadius and clickRadius > 0 then
-        local parts = workspace:GetPartBoundsInRadius(goalPos, clickRadius)
-        for _, part in ipairs(parts) do
-            for _, cd in ipairs(part:GetDescendants()) do
-                if cd:IsA("ClickDetector") then
-                    fireclickdetector(cd, 1)
-                end
-            end
-        end
-    end
 
     getgenv()._safeTweenBusy = false
     return true
@@ -85,12 +64,10 @@ local function DoSamQuest(compass)
     if not char then return end
     local hrp = char.HumanoidRootPart
 
-    -- Equip compass
     compass.Parent = char
     local arrow = compass:WaitForChild("CompassArrow", 5)
     if not arrow then return end
 
-    -- Tắt va chạm
     local originalCanCollide = {}
     for _, part in pairs(char:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -105,7 +82,6 @@ local function DoSamQuest(compass)
         end
     end
 
-    -- Khóa trọng lực
     local originalGravity = workspace.Gravity
     workspace.Gravity = 0
     local gravityConnection = workspace:GetPropertyChangedSignal("Gravity"):Connect(function()
@@ -123,10 +99,7 @@ local function DoSamQuest(compass)
         isDoingSam = false
     end)
 
-    -- Kích hoạt la bàn
-    if arrow.Transparency == 1 then
-        compass:Activate()
-    end
+    if arrow.Transparency == 1 then compass:Activate() end
     local transConn = arrow:GetPropertyChangedSignal("Transparency"):Connect(function()
         if arrow.Transparency == 1 and char:FindFirstChild("Compass") then
             compass:Activate()
@@ -150,14 +123,13 @@ local function DoSamQuest(compass)
 
     for i = 1, repeatCount do
         if not AutoSam or sharpTurnDetected then break end
-        if not char:FindFirstChild("Compass") then break end -- Mất la bàn
+        if not char:FindFirstChild("Compass") then break end
         if not arrow or not arrow:FindFirstChildWhichIsA("Weld") then break end
 
         local weld = arrow:FindFirstChildWhichIsA("Weld")
         local arrowCFrame = weld.Part0.CFrame * weld.C0 * weld.C1:Inverse() * CFrame.Angles(-math.rad(90), 0, 0)
         local rawLook = Vector3.new(arrowCFrame.LookVector.X, 0, arrowCFrame.LookVector.Z).Unit
 
-        -- Detect sharp turn (Vượt qua mục tiêu)
         if lastLookVector then
             local dotProduct = math.clamp(lastLookVector:Dot(rawLook), -1, 1)
             local angleDiff = math.acos(dotProduct)
@@ -169,12 +141,9 @@ local function DoSamQuest(compass)
         end
 
         local moveLook = rawLook
-        if lastLookVector then
-            moveLook = (lastLookVector * (1 - smoothFactor) + rawLook * smoothFactor).Unit
-        end
+        if lastLookVector then moveLook = (lastLookVector * (1 - smoothFactor) + rawLook * smoothFactor).Unit end
         lastLookVector = rawLook
 
-        -- Giữ nguyên Y = 1200
         currentPos = currentPos + (moveLook * stepDistance)
         currentPos = Vector3.new(currentPos.X, skyY, currentPos.Z)
         local destCFrame = CFrame.new(currentPos, currentPos + moveLook)
@@ -184,7 +153,7 @@ local function DoSamQuest(compass)
         tween.Completed:Wait()
     end
 
-    -- BƯỚC 3 & 4: HẠ XUỐNG 5 STUD SO VỚI MẶT ĐẤT VÀ TÌM TREES SPAWNER
+    -- BƯỚC 3 & 4: HẠ XUỐNG VÀ TÌM SPAWNER
     if sharpTurnDetected and sharpTurnPos then
         local rayOrigin = Vector3.new(sharpTurnPos.X, skyY, sharpTurnPos.Z)
         local rayDirection = Vector3.new(0, -2000, 0)
@@ -194,14 +163,11 @@ local function DoSamQuest(compass)
 
         local raycastResult = workspace:Raycast(rayOrigin, rayDirection, rayParams)
         local groundY = 215 
-        if raycastResult then
-            groundY = raycastResult.Position.Y
-        end
+        if raycastResult then groundY = raycastResult.Position.Y end
 
         SafeTween(Vector3.new(sharpTurnPos.X, groundY + 5, sharpTurnPos.Z))
         task.wait(0.2)
 
-        -- Tìm Spawner (giới hạn thời gian hoặc lặp để tránh bị kẹt vô hạn)
         local attempts = 0
         while AutoSam and char:FindFirstChild("Compass") and attempts < 10 do
             attempts = attempts + 1
@@ -219,43 +185,63 @@ local function DoSamQuest(compass)
         end
     end
 
-    -- Hoàn tất / Clean up
     if diedConn then diedConn:Disconnect() end
     if transConn then transConn:Disconnect() end
     resetGravity()
     restoreCollisions()
 end
 
--- [ EVENT LOGIC: TRIGGER SAM SEQUENCE ]
+-- [ EVENT LOGIC: TP & CLAIM COMPASS ]
 local function TriggerClaimAndSam()
-    -- Gửi lệnh Claim1 tới Server
-    ReplicatedStorage:WaitForChild("Connections"):WaitForChild("Claim_Sam"):FireServer("Claim1")
-    
-    -- Nếu đang bật Sam và chưa trong chuỗi hoạt động nào của Sam, tiến hành chờ
-    if AutoSam and not isWaitingForSam and not isDoingSam then
-        task.spawn(function()
-            isWaitingForSam = true
-            Fluent:Notify({ Title = "Sam Quest", Content = "Đã gửi lệnh Claim! Đang chờ 20 giây...", Duration = 3 })
-            
-            task.wait(20) -- Chờ đủ 20 giây theo yêu cầu
-            
-            isWaitingForSam = false
-            
-            -- Sau 20s, kiểm tra xem có nhận được la bàn không
-            local char = charOk()
-            local compass = LocalPlayer.Backpack:FindFirstChild("Compass") or (char and char:FindFirstChild("Compass"))
-            
-            if compass then
-                isDoingSam = true
-                Fluent:Notify({ Title = "Sam Quest", Content = "Đã thấy La bàn! Bắt đầu bay...", Duration = 3 })
-                DoSamQuest(compass)
-                isDoingSam = false
-            end
-        end)
-    end
+    if isWaitingForSam or isDoingSam then return end
+
+    task.spawn(function()
+        isWaitingForSam = true
+        local char = charOk()
+        
+        -- Dùng đường dẫn cố định bạn cung cấp: workspace.Merchants.QuestMerchant
+        local samPos = nil
+        local questMerchant = workspace:FindFirstChild("Merchants") and workspace.Merchants:FindFirstChild("QuestMerchant")
+        if questMerchant and questMerchant:FindFirstChild("HumanoidRootPart") then
+            samPos = questMerchant.HumanoidRootPart.Position
+        end
+
+        -- TP Lại gần Sam để Bypass chống Claim từ xa
+        if char and samPos then
+            Fluent:Notify({ Title = "Sam Quest", Content = "Đang TP tới Sam để lấy La bàn...", Duration = 2 })
+            -- TP tới cách mặt Sam 3 stud, đồng thời xoay mặt nhìn vào Sam
+            char.HumanoidRootPart.CFrame = CFrame.new(samPos + Vector3.new(0, 0, 3), samPos)
+            task.wait(0.5) -- Đợi server load tọa độ
+        elseif not samPos then
+            Fluent:Notify({ Title = "Sam Quest", Content = "Lỗi: Không tìm thấy QuestMerchant trên map!", Duration = 3 })
+        end
+
+        -- Gửi sự kiện Claim tới Server
+        ReplicatedStorage:WaitForChild("Connections"):WaitForChild("Claim_Sam"):FireServer("Claim1")
+        
+        -- Chờ tối đa 5 giây xem la bàn có vào túi không
+        local compass = nil
+        for i = 1, 10 do
+            char = charOk()
+            compass = LocalPlayer.Backpack:FindFirstChild("Compass") or (char and char:FindFirstChild("Compass"))
+            if compass then break end
+            task.wait(0.5)
+        end
+        
+        isWaitingForSam = false
+        
+        if compass and AutoSam then
+            isDoingSam = true
+            Fluent:Notify({ Title = "Sam Quest", Content = "Đã lấy được La bàn! Bắt đầu tìm kiếm...", Duration = 3 })
+            DoSamQuest(compass)
+            isDoingSam = false
+        elseif not compass then
+            Fluent:Notify({ Title = "Sam Quest", Content = "Không nhận được La bàn (Chưa tới giờ hoặc lỗi).", Duration = 3 })
+        end
+    end)
 end
 
--- [ LOGIC: AUTO FISH (ĐÃ SỬA THÀNH TELEPORT) ]
+-- [ LOGIC: AUTO FISH (TP ĐẾN BỤC, CÂU & KHÔNG BÁN) ]
 local function DoFishQuest()
     if not FishBlock then return end
     local char = charOk()
@@ -267,7 +253,7 @@ local function DoFishQuest()
     -- TELEPORT ĐẾN BỤC CÂU CÁ
     if (hrp.Position - targetPos).Magnitude > 5 then
         hrp.CFrame = CFrame.new(targetPos)
-        task.wait(0.3) -- Chờ server load vị trí mới
+        task.wait(0.3)
     end
 
     for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -302,37 +288,13 @@ local function DoFishQuest()
     if bobber.Effect.Enabled then
         task.wait(0.6)
         rod.Click:FireServer(hrp.Position)
-
-        local retum = workspace:FindFirstChild("Merchants")
-            and workspace.Merchants:FindFirstChild("FishMerchant")
-            and workspace.Merchants.FishMerchant:FindFirstChild("Clickable")
-            and workspace.Merchants.FishMerchant.Clickable:FindFirstChild("Retum")
-
-        if retum then
-            local npc = workspace.Merchants.FishMerchant
-            local npcHrp = npc:FindFirstChild("HumanoidRootPart")
-            if npcHrp then
-                local pos = npcHrp.Position + (npcHrp.CFrame.LookVector * -3)
-                pos = Vector3.new(pos.X, npcHrp.Position.Y, pos.Z)
-                
-                -- TELEPORT TRỰC TIẾP ĐẾN NPC MERCHANT ĐỂ TRẢ CÁ
-                if (hrp.Position - pos).Magnitude > 5 then
-                    -- Vừa TP đến vị trí, vừa xoay mặt về phía NPC
-                    hrp.CFrame = CFrame.new(pos, npcHrp.Position)
-                    task.wait(0.3) -- Chờ server xác nhận vị trí trước khi gửi lệnh
-                end
-                
-                retum:FireServer()
-            end
-        end
     end
 end
 
--- [ MASTER LOOP ]
+-- [ MASTER LOOP FISHING ]
 task.spawn(function()
     while task.wait(0.5) do
         pcall(function()
-            -- CHỈ thực hiện Auto Fish khi không bận chờ/làm Sam
             if not isWaitingForSam and not isDoingSam then
                 if AutoFish then
                     DoFishQuest()
@@ -342,12 +304,24 @@ task.spawn(function()
     end
 end)
 
--- [ AUTO CLAIM COMPASS LOOP ]
+-- [ AUTO CLAIM COMPASS LOOP (OPTIMIZED UI READING) ]
 task.spawn(function()
-    while task.wait(5) do
-        if AutoClaimCompass then
+    while task.wait(1) do
+        if AutoClaimCompass and not isWaitingForSam and not isDoingSam then
             pcall(function()
-                TriggerClaimAndSam()
+                local gui = LocalPlayer:FindFirstChild("PlayerGui")
+                if gui then
+                    -- Quét tìm UI SamTimer
+                    local timerUI = gui:FindFirstChild("SamTimer", true)
+                    if timerUI then
+                        local text = string.lower(timerUI.Text)
+                        -- Kích hoạt nếu hiển thị "ready", "claim", hoặc "00:00:00"
+                        if string.find(text, "ready") or string.find(text, "claim") or text == "00:00:00" or text == "00:00" or text == "0" then
+                            TriggerClaimAndSam()
+                            task.wait(10) -- Cooldown 10s để không spam
+                        end
+                    end
+                end
             end)
         end
     end
@@ -356,7 +330,7 @@ end)
 -- [ UI TABS SETUP ]
 Tabs.FarmTab:AddToggle("ToggleAutoFish", {
     Title = "Auto Fish Farm",
-    Description = "Dừng lại khi đang làm event Sam",
+    Description = "Chỉ câu cá (Không bán)",
     Default = false,
     Callback = function(state)
         AutoFish = state
@@ -377,8 +351,8 @@ Tabs.FarmTab:AddToggle("ToggleAutoFish", {
 })
 
 Tabs.SamTab:AddToggle("ToggleCompassFarm", {
-    Title = "Auto Find Compass (Event Based)",
-    Description = "Làm chuỗi bay cao tìm Sam nếu Claim1 thành công",
+    Title = "Auto Find Compass",
+    Description = "Làm Sam Quest ngay khi Claim thành công",
     Default = false,
     Callback = function(state)
         AutoSam = state
@@ -387,7 +361,7 @@ Tabs.SamTab:AddToggle("ToggleCompassFarm", {
 
 Tabs.SamTab:AddToggle("AutoClaimCompass", {
     Title = "Auto Claim Compass",
-    Description = "Tự động kích hoạt chuỗi Event 20s",
+    Description = "Đọc SamTimer để Claim Sam (Bypass Khoảng Cách)",
     Default = false,
     Callback = function(state)
         AutoClaimCompass = state
@@ -396,9 +370,8 @@ Tabs.SamTab:AddToggle("AutoClaimCompass", {
 
 local Section = Tabs.SamTab:AddSection("Manual Utilities")
 Tabs.SamTab:AddButton({
-    Title = "Claim One Compass",
+    Title = "Claim One Compass (Bypass Distance)",
     Callback = function()
-        -- Kích hoạt bằng nút thủ công cũng sẽ vào chuỗi 20s nếu đang bật Auto Sam
         TriggerClaimAndSam()
     end
 })
@@ -409,4 +382,4 @@ Tabs.SamTab:AddButton({
     end
 })
 
-Fluent:Notify({ Title = "Gemini Hub", Content = "Đã đổi thành Teleport an toàn!", Duration = 5 })
+Fluent:Notify({ Title = "Gemini Hub", Content = "Đã sử dụng Path tĩnh cho NPC Sam!", Duration = 5 })
