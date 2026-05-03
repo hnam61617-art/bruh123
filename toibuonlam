@@ -1,13 +1,11 @@
 -- xaiku deobf was hereee
--- Optimized & Merged by Gemini (Fluent UI Standard + Mobile Delta Fix + Added Features)
+-- Optimized & Merged by Gemini (Fluent UI Standard + Mobile Delta Fix + Compass + Fast Chest)
 
 local Players = game:GetService('Players')
 local Workspace = game:GetService('Workspace')
 local RbxAnalytics = game:GetService('RbxAnalyticsService')
 local VirtualUser = game:GetService('VirtualUser')
 local LocalPlayer = Players.LocalPlayer
-
--- [ĐÃ XÓA TÍNH NĂNG STAFF CHECK/AUTO KICK THEO YÊU CẦU]
 
 -- [2] TỐI ƯU HÌNH PHẠT BANLIST
 task.spawn(function()
@@ -223,7 +221,7 @@ task.spawn(function()
     end
 end)
 
-Tabs.Farming:AddSection('Haki & Compass')
+Tabs.Farming:AddSection('Haki & Auto Chest')
 
 local autogethaki = Tabs.Farming:AddToggle('autogethakitoggle', { Title = 'Auto Get Haki(Lv 1000)', Default = false })
 autogethaki:OnChanged(function(state)
@@ -255,25 +253,94 @@ task.spawn(function()
     end
 end)
 
--- [TÍNH NĂNG MỚI] AUTO COMPASS TỪ NPC SAM
-local autocompass = Tabs.Farming:AddToggle('autocompasstoggle', { Title = 'Auto Compass (Sam)', Default = false })
-autocompass:OnChanged(function(state)
-    _G.AutoCompassSam = state
-    if state then
-        Fluent:Notify({ Title = 'Auto Compass', Content = 'Started getting Compass from Sam', Duration = 3 })
-        task.spawn(function()
-            while _G.AutoCompassSam do
-                pcall(function()
-                    Workspace.Merchants.Sam.Clickable.Retum:FireServer("Compass")
-                    -- Phòng hờ trường hợp không cần string argument
-                    Workspace.Merchants.Sam.Clickable.Retum:FireServer()
-                end)
-                task.wait(5)
-            end
-        end)
-    end
+-- [TÍNH NĂNG MỚI] AUTO CLAIM CHEST (TỐI ƯU QUÉT THƯ MỤC)
+local autoclaimchest = Tabs.Farming:AddToggle('autoclaimchesttoggle', { Title = 'Auto Claim Chest', Default = false })
+autoclaimchest:OnChanged(function(state)
+    getgenv().autochest = state
+    if state then Fluent:Notify({ Title = 'Auto Chest', Content = 'Searching for chests...', Duration = 3 }) end
+
+    task.spawn(function()
+        local chestFolderCache = nil -- Biến lưu trữ thư mục rương để khỏi quét lại
+
+        while getgenv().autochest do
+            pcall(function()
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                -- Nếu chưa có bộ nhớ đệm thư mục rương, tìm nó 1 lần duy nhất
+                if not chestFolderCache then
+                    for _, v in ipairs(Workspace:GetChildren()) do
+                        -- Tìm folder có chữ chest hoặc treasure
+                        if string.find(string.lower(v.Name), "chest") or string.find(string.lower(v.Name), "treasure") then
+                            chestFolderCache = v
+                            break
+                        end
+                    end
+                end
+
+                -- Chỉ quét trong thư mục rương (nếu tìm thấy), không thì xài tạm Workspace
+                local scanTarget = chestFolderCache or Workspace
+                
+                for _, obj in ipairs(scanTarget:GetDescendants()) do
+                    if obj.Name == 'Touch' and obj.Parent and obj.Parent.Name == 'TreasureChestPart' then
+                        -- Dịch chuyển rương tới người chơi theo logic gốc
+                        obj.Parent.CFrame = hrp.CFrame
+                    end
+                end
+            end)
+            task.wait(15) -- Đợi 15 giây theo đúng logic gốc của bạn
+        end
+    end)
 end)
 
+Tabs.Farming:AddSection('Compass (Quest Merchant)')
+
+local getcompass1 = Tabs.Farming:AddToggle('getcompass1toggle', { Title = 'Get 1 Compass', Default = false })
+getcompass1:OnChanged(function(state)
+    getgenv().autosam1 = state
+    task.spawn(function()
+        while getgenv().autosam1 do
+            pcall(function() Workspace.Merchants.QuestMerchant.Clickable.Retum:FireServer('Claim1') end)
+            task.wait(1)
+        end
+    end)
+end)
+
+local getcompass10 = Tabs.Farming:AddToggle('getcompass10toggle', { Title = 'Get 10 Compass', Default = false })
+getcompass10:OnChanged(function(state)
+    getgenv().autosam10 = state
+    task.spawn(function()
+        while getgenv().autosam10 do
+            pcall(function() Workspace.Merchants.QuestMerchant.Clickable.Retum:FireServer('Claim10') end)
+            task.wait(1)
+        end
+    end)
+end)
+
+local findcompass = Tabs.Farming:AddToggle('findcompasstoggle', { Title = 'Find Compass', Default = false })
+findcompass:OnChanged(function(state)
+    getgenv().autofindsam = state
+    task.spawn(function()
+        while getgenv().autofindsam do
+            pcall(function()
+                local char = LocalPlayer.Character
+                if not char then return end
+
+                if LocalPlayer.Backpack:FindFirstChild('Compass') then
+                    char.Humanoid:EquipTool(LocalPlayer.Backpack.Compass)
+                end
+
+                -- Logic dò tìm Poser được viết lại gọn gàng thay cho v165, v166...
+                local compass = char:FindFirstChild('Compass')
+                if compass and compass:FindFirstChild('Poser') then
+                    char.HumanoidRootPart.CFrame = CFrame.new(compass.Poser.Value)
+                    compass:Activate()
+                end
+            end)
+            task.wait(0.3)
+        end
+    end)
+end)
 
 -- ==========================================
 -- AUTO STATS TAB 
@@ -397,7 +464,6 @@ Tabs.Misc:AddButton({
 
 Tabs.Misc:AddSection('Spawn & Server & SafeZone')
 
--- [TÍNH NĂNG MỚI] AUTO TELEPORT ĐẾN SAFE ZONE MỖI 30 GIÂY
 local autosafezone = Tabs.Misc:AddToggle('autosafezonetoggle', { Title = 'Auto Safe Zone (30s Tele)', Default = false })
 autosafezone:OnChanged(function(state)
     _G.AutoSafeZoneTele = state
