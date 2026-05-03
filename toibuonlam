@@ -1,5 +1,5 @@
 -- xaiku deobf was hereee
--- Optimized & Merged by Gemini (Fluent UI Standard + Mobile Delta Fix)
+-- Optimized & Merged by Gemini (Fluent UI Standard + Mobile Delta Fix + Added Features)
 
 local Players = game:GetService('Players')
 local Workspace = game:GetService('Workspace')
@@ -7,18 +7,7 @@ local RbxAnalytics = game:GetService('RbxAnalyticsService')
 local VirtualUser = game:GetService('VirtualUser')
 local LocalPlayer = Players.LocalPlayer
 
-local staffList = {
-    'Oblivic', 'BowTiedPony', 'Bige0n', 'Farquanetta', 'icydragonwingsis',
-    'trashpanda2361', 'MarcusVetarus', 'ElianJoestar', 'Quixotize', 'CudlesstheCat',
-    'FoxKingFab', 'Tiptop98', 'vlonedd', 'VortexFragmented', 'Natsudragn331',
-}
-
--- [1] TỐI ƯU CHECK STAFF
-Players.PlayerAdded:Connect(function(player)
-    if table.find(staffList, player.Name) then
-        LocalPlayer:Kick('Staff OPL Has Joined Server, Dont Worry. You Got Protected By Misa Hub')
-    end
-end)
+-- [ĐÃ XÓA TÍNH NĂNG STAFF CHECK/AUTO KICK THEO YÊU CẦU]
 
 -- [2] TỐI ƯU HÌNH PHẠT BANLIST
 task.spawn(function()
@@ -28,7 +17,7 @@ task.spawn(function()
 
     if success and type(banList) == "table" and table.find(banList, LocalPlayer.Name) then
         while task.wait(0.5) do
-            for _, player in Players:GetPlayers() do
+            for _, player in ipairs(Players:GetPlayers()) do
                 if player.Name ~= LocalPlayer.Name and player.Character then
                     local char = player.Character
                     local islandTown = Workspace:FindFirstChild('IslandTown')
@@ -62,7 +51,7 @@ LocalPlayer.Idled:Connect(function()
     VirtualUser:Button2Up(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
 end)
 
--- Tạo Safe Zone
+-- Tạo Safe Zone (Chỗ An Toàn)
 local SafeZone = Instance.new('Part')
 SafeZone.Name = 'SafeZoneOuterSpacePart'
 SafeZone.Size = Vector3.new(200, 3, 200)
@@ -127,7 +116,9 @@ Fluent:Notify({ Title = 'Notification', Content = 'Welcome to Misa Hub', Duratio
 Tabs.About:AddParagraph({ Title = 'Notice', Content = 'This is Misa Hub make by TuanKhai and Irenkiss teach me a lot of code' })
 Tabs.About:AddParagraph({ Title = 'Name Owner', Content = 'TuanKhai.\nIrenKiss.\nTson.' })
 
+-- ==========================================
 -- [5] FARMING TAB
+-- ==========================================
 local autocannonmobs = Tabs.Farming:AddToggle('autocannonmobtoggle', { Title = 'Auto Cannon Mobs', Default = false })
 autocannonmobs:OnChanged(function(state) _G.autocannonslow = state end)
 
@@ -232,7 +223,7 @@ task.spawn(function()
     end
 end)
 
-Tabs.Farming:AddSection('Haki,...')
+Tabs.Farming:AddSection('Haki & Compass')
 
 local autogethaki = Tabs.Farming:AddToggle('autogethakitoggle', { Title = 'Auto Get Haki(Lv 1000)', Default = false })
 autogethaki:OnChanged(function(state)
@@ -264,8 +255,28 @@ task.spawn(function()
     end
 end)
 
+-- [TÍNH NĂNG MỚI] AUTO COMPASS TỪ NPC SAM
+local autocompass = Tabs.Farming:AddToggle('autocompasstoggle', { Title = 'Auto Compass (Sam)', Default = false })
+autocompass:OnChanged(function(state)
+    _G.AutoCompassSam = state
+    if state then
+        Fluent:Notify({ Title = 'Auto Compass', Content = 'Started getting Compass from Sam', Duration = 3 })
+        task.spawn(function()
+            while _G.AutoCompassSam do
+                pcall(function()
+                    Workspace.Merchants.Sam.Clickable.Retum:FireServer("Compass")
+                    -- Phòng hờ trường hợp không cần string argument
+                    Workspace.Merchants.Sam.Clickable.Retum:FireServer()
+                end)
+                task.wait(5)
+            end
+        end)
+    end
+end)
+
+
 -- ==========================================
--- AUTO STATS TAB (Converted)
+-- AUTO STATS TAB 
 -- ==========================================
 Tabs.AutoStats:AddSection('Buy Cannon')
 Tabs.AutoStats:AddButton({
@@ -286,7 +297,7 @@ Tabs.AutoStats:AddButton({
 })
 
 -- ==========================================
--- MISC TAB (Converted)
+-- MISC TAB 
 -- ==========================================
 Tabs.Misc:AddSection('Fake melee')
 Tabs.Misc:AddButton({
@@ -384,7 +395,29 @@ Tabs.Misc:AddButton({
     end
 })
 
-Tabs.Misc:AddSection('Spawn & Server')
+Tabs.Misc:AddSection('Spawn & Server & SafeZone')
+
+-- [TÍNH NĂNG MỚI] AUTO TELEPORT ĐẾN SAFE ZONE MỖI 30 GIÂY
+local autosafezone = Tabs.Misc:AddToggle('autosafezonetoggle', { Title = 'Auto Safe Zone (30s Tele)', Default = false })
+autosafezone:OnChanged(function(state)
+    _G.AutoSafeZoneTele = state
+    if state then
+        Fluent:Notify({ Title = 'Safe Zone', Content = 'Will teleport to Safe Zone every 30s', Duration = 5 })
+        task.spawn(function()
+            while _G.AutoSafeZoneTele do
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    local safePart = Workspace:FindFirstChild('SafeZoneOuterSpacePart')
+                    if hrp and safePart then
+                        hrp.CFrame = safePart.CFrame + Vector3.new(0, 5, 0)
+                    end
+                end)
+                task.wait(30)
+            end
+        end)
+    end
+end)
+
 local autospawn = Tabs.Misc:AddToggle('autospawntoggle', { Title = 'Auto Spawn', Default = false })
 autospawn:OnChanged(function(state) _G.AutoSpawnn = state end)
 
