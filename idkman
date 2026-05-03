@@ -1,82 +1,3 @@
--- ==========================================
--- 1. KHỞI TẠO GIAO DIỆN (FLUENT UI)
--- ==========================================
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
-local Window = Fluent:CreateWindow({
-    Title = "Ascended Hub - Auto Fish & Sam",
-    SubTitle = "Delta Optimized",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.RightControl
-})
-
-local Tabs = {
-    FarmTab = Window:AddTab({ Title = "Farm & Sam", Icon = "swords" })
-}
-
--- ==========================================
--- 2. CÁC HÀM HỖ TRỢ (SAFE TWEEN, CHAR OK)
--- ==========================================
-local function charOk()
-    local char = game.Players.LocalPlayer.Character
-    return char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") and char
-end
-
-local function disableCollision(model)
-    if not model then return end
-    for _, part in ipairs(model:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
-    end
-end
-
-getgenv().TweenSettings = { MaxSpeed = 250, MinTweenTime = 0.25, MaxTweenTime = 3, RandomDelay = { Min = 0, Max = 0 } }
-getgenv()._safeTweenBusy = false
-
-function SafeTween(goalPos, clickRadius)
-    local char = charOk()
-    if not char then return false end
-    local hrp = char.HumanoidRootPart
-
-    while getgenv()._safeTweenBusy do task.wait() end
-    getgenv()._safeTweenBusy = true
-
-    local distance = (hrp.Position - goalPos).Magnitude
-    local cfg = getgenv().TweenSettings
-    local speed = cfg.MaxSpeed or 250
-    local tweenTime = math.clamp(distance / speed, cfg.MinTweenTime, cfg.MaxTweenTime)
-
-    local tween = game:GetService("TweenService"):Create(hrp, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
-        CFrame = CFrame.new(goalPos)
-    })
-    tween:Play()
-    tween.Completed:Wait()
-
-    local rd = cfg.RandomDelay
-    task.wait((rd.Min or 0) + math.random() * ((rd.Max or 0) - (rd.Min or 0)))
-
-    if clickRadius and clickRadius > 0 then
-        local parts = workspace:GetPartBoundsInRadius(goalPos, clickRadius)
-        for _, part in ipairs(parts) do
-            for _, cd in ipairs(part:GetDescendants()) do
-                if cd:IsA("ClickDetector") then
-                    fireclickdetector(cd, 1)
-                end
-            end
-        end
-    end
-
-    getgenv()._safeTweenBusy = false
-    return true
-end
-
--- ==========================================
--- 3. LOGIC FARM (CÂU CÁ & BÁN CÁ + TÌM SAM)
--- ==========================================
 local FishBlock = nil
 
 Tabs.FarmTab:AddToggle("ToggleAutoFishSam", {
@@ -100,13 +21,16 @@ Tabs.FarmTab:AddToggle("ToggleAutoFishSam", {
 
             task.spawn(function()
                 local oldGrav = workspace.Gravity
-                workspace.Gravity = 0
+                local isHuntingSam = false -- Thêm biến kiểm tra trạng thái
 
                 local nc
                 nc = game:GetService("RunService").Stepped:Connect(function()
                     if not getgenv().AutoFarm then nc:Disconnect() return end
-                    local char = charOk()
-                    if char then disableCollision(char) end 
+                    -- CHỈ bật NoClip khi đang đi tìm SAM
+                    if isHuntingSam then
+                        local char = charOk()
+                        if char then disableCollision(char) end 
+                    end
                 end)
                 
                 local height = 1500
@@ -128,6 +52,9 @@ Tabs.FarmTab:AddToggle("ToggleAutoFishSam", {
                             -- ==============================
                             -- LOGIC ĐI TÌM SAM
                             -- ==============================
+                            isHuntingSam = true
+                            workspace.Gravity = 0 -- Tắt trọng lực để bay
+
                             compass.Parent = char
                             
                             if hrp.Position.Y < 1400 then
@@ -172,6 +99,9 @@ Tabs.FarmTab:AddToggle("ToggleAutoFishSam", {
                             -- ==============================
                             -- LOGIC CÂU CÁ & BÁN CÁ
                             -- ==============================
+                            isHuntingSam = false
+                            workspace.Gravity = 196.2 -- TRẢ LẠI TRỌNG LỰC ĐỂ RƠI XUỐNG BỆ
+
                             if not FishBlock then return end
                             local targetPos = FishBlock.Position + Vector3.new(0, 3, 0)
 
@@ -246,6 +176,3 @@ Tabs.FarmTab:AddToggle("ToggleAutoFishSam", {
         end
     end
 })
-
-Window:SelectTab(1)
-Fluent:Notify({Title = "Thành công", Content = "Script đã tải xong!", Duration = 5})
