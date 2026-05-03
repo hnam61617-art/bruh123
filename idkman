@@ -265,7 +265,11 @@ local function DoFishQuest()
     local targetPos = FishBlock.Position + Vector3.new(0, 3, 0)
 
     if (hrp.Position - targetPos).Magnitude > 5 then
-        SafeTween(targetPos, 0)
+        -- TRÁNH NƯỚC: Quỹ đạo Bay Lên 20 Studs -> Bay Ngang -> Hạ Xuống
+        local safeY = hrp.Position.Y + 20
+        SafeTween(Vector3.new(hrp.Position.X, safeY, hrp.Position.Z), 0) -- Bay thẳng lên
+        SafeTween(Vector3.new(targetPos.X, safeY, targetPos.Z), 0)       -- Bay ngang qua bục
+        SafeTween(targetPos, 0)                                          -- Hạ cánh xuống bục
     end
 
     for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -312,7 +316,15 @@ local function DoFishQuest()
             if npcHrp then
                 local pos = npcHrp.Position + (npcHrp.CFrame.LookVector * -3)
                 pos = Vector3.new(pos.X, npcHrp.Position.Y, pos.Z)
-                SafeTween(pos, 0)
+                
+                -- ĐẢM BẢO AN TOÀN LÚC TRẢ CÁ CHO MERCHANT
+                if (hrp.Position - pos).Magnitude > 5 then
+                    local safeY = hrp.Position.Y + 20
+                    SafeTween(Vector3.new(hrp.Position.X, safeY, hrp.Position.Z), 0) -- Bay thẳng lên 20 studs
+                    SafeTween(Vector3.new(pos.X, safeY, pos.Z), 0)                   -- Bay ngang qua Merchant
+                end
+                SafeTween(pos, 0) -- Hạ xuống
+                
                 hrp.CFrame = CFrame.new(hrp.Position, npcHrp.Position)
                 task.wait(0.2)
                 retum:FireServer()
