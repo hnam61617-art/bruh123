@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local Window = Fluent:CreateWindow({
     Title = "Gemini Hub - Auto Farm",
-    SubTitle = "Optimized Sam Path",
+    SubTitle = "Fast Sam Path",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 350),
     Acrylic = true,
@@ -199,34 +199,25 @@ local function TriggerClaimAndSam()
         isWaitingForSam = true
         local char = charOk()
         
-        -- Dùng đường dẫn cố định bạn cung cấp: workspace.Merchants.QuestMerchant
         local samPos = nil
         local questMerchant = workspace:FindFirstChild("Merchants") and workspace.Merchants:FindFirstChild("QuestMerchant")
         if questMerchant and questMerchant:FindFirstChild("HumanoidRootPart") then
             samPos = questMerchant.HumanoidRootPart.Position
         end
 
-        -- TP Lại gần Sam để Bypass chống Claim từ xa
         if char and samPos then
-            Fluent:Notify({ Title = "Sam Quest", Content = "Đang TP tới Sam để lấy La bàn...", Duration = 2 })
-            -- TP tới cách mặt Sam 3 stud, đồng thời xoay mặt nhìn vào Sam
             char.HumanoidRootPart.CFrame = CFrame.new(samPos + Vector3.new(0, 0, 3), samPos)
-            task.wait(0.5) -- Đợi server load tọa độ
-        elseif not samPos then
-            Fluent:Notify({ Title = "Sam Quest", Content = "Lỗi: Không tìm thấy QuestMerchant trên map!", Duration = 3 })
-        end
-
-        -- Gửi sự kiện Claim tới Server
-        ReplicatedStorage:WaitForChild("Connections"):WaitForChild("Claim_Sam"):FireServer("Claim1")
-        
-        -- Chờ tối đa 5 giây xem la bàn có vào túi không
-        local compass = nil
-        for i = 1, 10 do
-            char = charOk()
-            compass = LocalPlayer.Backpack:FindFirstChild("Compass") or (char and char:FindFirstChild("Compass"))
-            if compass then break end
             task.wait(0.5)
         end
+
+        -- Gửi sự kiện Claim
+        ReplicatedStorage:WaitForChild("Connections"):WaitForChild("Claim_Sam"):FireServer("Claim1")
+        
+        -- CHỜ ĐÚNG 0.5 GIÂY RỒI LÀM LUÔN
+        task.wait(0.5)
+        
+        char = charOk()
+        local compass = LocalPlayer.Backpack:FindFirstChild("Compass") or (char and char:FindFirstChild("Compass"))
         
         isWaitingForSam = false
         
@@ -311,11 +302,9 @@ task.spawn(function()
             pcall(function()
                 local gui = LocalPlayer:FindFirstChild("PlayerGui")
                 if gui then
-                    -- Quét tìm UI SamTimer
                     local timerUI = gui:FindFirstChild("SamTimer", true)
                     if timerUI then
                         local text = string.lower(timerUI.Text)
-                        -- Kích hoạt nếu hiển thị "ready", "claim", hoặc "00:00:00"
                         if string.find(text, "ready") or string.find(text, "claim") or text == "00:00:00" or text == "00:00" or text == "0" then
                             TriggerClaimAndSam()
                             task.wait(10) -- Cooldown 10s để không spam
@@ -361,7 +350,7 @@ Tabs.SamTab:AddToggle("ToggleCompassFarm", {
 
 Tabs.SamTab:AddToggle("AutoClaimCompass", {
     Title = "Auto Claim Compass",
-    Description = "Đọc SamTimer để Claim Sam (Bypass Khoảng Cách)",
+    Description = "Đọc SamTimer để Claim Sam",
     Default = false,
     Callback = function(state)
         AutoClaimCompass = state
@@ -370,7 +359,7 @@ Tabs.SamTab:AddToggle("AutoClaimCompass", {
 
 local Section = Tabs.SamTab:AddSection("Manual Utilities")
 Tabs.SamTab:AddButton({
-    Title = "Claim One Compass (Bypass Distance)",
+    Title = "Claim One Compass",
     Callback = function()
         TriggerClaimAndSam()
     end
@@ -382,4 +371,4 @@ Tabs.SamTab:AddButton({
     end
 })
 
-Fluent:Notify({ Title = "Gemini Hub", Content = "Đã sử dụng Path tĩnh cho NPC Sam!", Duration = 5 })
+Fluent:Notify({ Title = "Gemini Hub", Content = "Đã chỉnh Tốc độ Tìm Sam (0.5s)!", Duration = 5 })
