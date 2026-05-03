@@ -255,7 +255,7 @@ local function TriggerClaimAndSam()
     end
 end
 
--- [ LOGIC: AUTO FISH ]
+-- [ LOGIC: AUTO FISH (ĐÃ SỬA THÀNH TELEPORT) ]
 local function DoFishQuest()
     if not FishBlock then return end
     local char = charOk()
@@ -264,12 +264,10 @@ local function DoFishQuest()
     local hrp = char.HumanoidRootPart
     local targetPos = FishBlock.Position + Vector3.new(0, 3, 0)
 
+    -- TELEPORT ĐẾN BỤC CÂU CÁ
     if (hrp.Position - targetPos).Magnitude > 5 then
-        -- TRÁNH NƯỚC: Quỹ đạo Bay Lên 20 Studs -> Bay Ngang -> Hạ Xuống
-        local safeY = hrp.Position.Y + 20
-        SafeTween(Vector3.new(hrp.Position.X, safeY, hrp.Position.Z), 0) -- Bay thẳng lên
-        SafeTween(Vector3.new(targetPos.X, safeY, targetPos.Z), 0)       -- Bay ngang qua bục
-        SafeTween(targetPos, 0)                                          -- Hạ cánh xuống bục
+        hrp.CFrame = CFrame.new(targetPos)
+        task.wait(0.3) -- Chờ server load vị trí mới
     end
 
     for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -317,16 +315,13 @@ local function DoFishQuest()
                 local pos = npcHrp.Position + (npcHrp.CFrame.LookVector * -3)
                 pos = Vector3.new(pos.X, npcHrp.Position.Y, pos.Z)
                 
-                -- ĐẢM BẢO AN TOÀN LÚC TRẢ CÁ CHO MERCHANT
+                -- TELEPORT TRỰC TIẾP ĐẾN NPC MERCHANT ĐỂ TRẢ CÁ
                 if (hrp.Position - pos).Magnitude > 5 then
-                    local safeY = hrp.Position.Y + 20
-                    SafeTween(Vector3.new(hrp.Position.X, safeY, hrp.Position.Z), 0) -- Bay thẳng lên 20 studs
-                    SafeTween(Vector3.new(pos.X, safeY, pos.Z), 0)                   -- Bay ngang qua Merchant
+                    -- Vừa TP đến vị trí, vừa xoay mặt về phía NPC
+                    hrp.CFrame = CFrame.new(pos, npcHrp.Position)
+                    task.wait(0.3) -- Chờ server xác nhận vị trí trước khi gửi lệnh
                 end
-                SafeTween(pos, 0) -- Hạ xuống
                 
-                hrp.CFrame = CFrame.new(hrp.Position, npcHrp.Position)
-                task.wait(0.2)
                 retum:FireServer()
             end
         end
@@ -414,4 +409,4 @@ Tabs.SamTab:AddButton({
     end
 })
 
-Fluent:Notify({ Title = "Gemini Hub", Content = "Đã cập nhật Event-Based Logic thành công!", Duration = 5 })
+Fluent:Notify({ Title = "Gemini Hub", Content = "Đã đổi thành Teleport an toàn!", Duration = 5 })
