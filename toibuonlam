@@ -31,7 +31,7 @@ v62.AutoStats:AddButton({
                 {
                     Title = 'Ok',
                     Callback = function()
-                        Workspace.Merchants.HeavyWeaponsMerchant.Clickable.Retum:FireServer('Cannon Ball', 400000)
+                        game:GetService('Workspace').Merchants.HeavyWeaponsMerchant.Clickable.Retum:FireServer('Cannon Ball', 400000)
                     end,
                 },
                 {
@@ -60,18 +60,18 @@ v62.Mics:AddButton({
                         local u186 = {}
                         local function lol(p187)
                             if u186[p187] then return u186[p187] end
-                            local v188 = Players:FindFirstChild(p187)
+                            local v188 = game:GetService('Players'):FindFirstChild(p187)
                             if v188 then
                                 u186[p187] = v188.UserId
                                 return v188.UserId
                             end
                             local u189 = nil
-                            pcall(function() u189 = Players:lol(p187) end)
+                            pcall(function() u189 = game:GetService('Players'):lol(p187) end)
                             u186[p187] = u189
                             return u189
                         end
-                        local v191 = lol(LocalPlayer.Name)
-                        Workspace.UserData['User_' .. v191].UpdateMelee:FireServer('Seastone Cestus')
+                        local v191 = lol(game.Players.LocalPlayer.Name)
+                        game:GetService('Workspace').UserData['User_' .. v191].UpdateMelee:FireServer('Seastone Cestus')
                     end,
                 },
                 {
@@ -97,18 +97,18 @@ v62.Mics:AddButton({
                         local u193 = {}
                         local function lol(p194)
                             if u193[p194] then return u193[p194] end
-                            local v195 = Players:FindFirstChild(p194)
+                            local v195 = game:GetService('Players'):FindFirstChild(p194)
                             if v195 then
                                 u193[p194] = v195.UserId
                                 return v195.UserId
                             end
                             local u196 = nil
-                            pcall(function() u196 = Players:lol(p194) end)
+                            pcall(function() u196 = game:GetService('Players'):lol(p194) end)
                             u193[p194] = u196
                             return u196
                         end
-                        local v198 = lol(LocalPlayer.Name)
-                        Workspace.UserData['User_' .. v198].UpdateMelee:FireServer('Aqua Staff')
+                        local v198 = lol(game.Players.LocalPlayer.Name)
+                        game:GetService('Workspace').UserData['User_' .. v198].UpdateMelee:FireServer('Aqua Staff')
                     end,
                 },
                 {
@@ -166,8 +166,7 @@ antistun:OnChanged(function(p200)
             while getgenv().antistun do
                 task.wait(0.1) -- Tăng delay lên 0.1 để giảm lag
                 pcall(function()
-                    local char = LocalPlayer.Character
-                    -- Chỉ chạy khi nhân vật còn sống để tránh loop báo lỗi
+                    local char = game.Players.LocalPlayer.Character
                     if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
                         char.BurnMagmaOverTime.Value = true
                         char.BurnOverTime.Value = true
@@ -211,9 +210,9 @@ v62.Mics:AddButton({
                     Title = 'Confirm',
                     Callback = function()
                         local u202 = true
-                        UserInputService.JumpRequest:Connect(function()
+                        game:GetService('UserInputService').JumpRequest:Connect(function()
                             if u202 then
-                                local hum = LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+                                local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
                                 if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
                             end
                         end)
@@ -240,10 +239,10 @@ autospawn:OnChanged(function(p203)
 end)
 
 task.spawn(function()
-    while task.wait(1) do -- Chuyển từ wait() trống sang task.wait(1) để giảm chu kỳ vòng lặp
+    while task.wait(1) do
         if _G.AutoSpawnn then
             pcall(function()
-                local guiLoad = LocalPlayer.PlayerGui:FindFirstChild("Load")
+                local guiLoad = game.Players.LocalPlayer.PlayerGui:FindFirstChild("Load")
                 if guiLoad and guiLoad.Frame.Visible then
                     for _, connection in pairs(getconnections(guiLoad.Frame.Load.MouseButton1Click)) do
                         connection:Fire()
@@ -265,7 +264,7 @@ v62.Mics:AddButton({
                 {
                     Title = 'Ok',
                     Callback = function()
-                        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+                        game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId)
                     end,
                 },
                 {
@@ -296,9 +295,9 @@ v62.Mics:AddButton({
                         local function TPReturner()
                             local v212
                             if u210 ~= '' then
-                                v212 = HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. _PlaceId .. '/servers/Public?sortOrder=Asc&limit=100&cursor=' .. u210))
+                                v212 = game:GetService('HttpService'):JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. _PlaceId .. '/servers/Public?sortOrder=Asc&limit=100&cursor=' .. u210))
                             else
-                                v212 = HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. _PlaceId .. '/servers/Public?sortOrder=Asc&limit=100'))
+                                v212 = game:GetService('HttpService'):JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. _PlaceId .. '/servers/Public?sortOrder=Asc&limit=100'))
                             end
 
                             if v212.nextPageCursor and v212.nextPageCursor ~= 'null' then
@@ -312,9 +311,7 @@ v62.Mics:AddButton({
                                 if tonumber(v217.maxPlayers) > tonumber(v217.playing) then
                                     for v216, v223 in pairs(u209) do
                                         if v216 == 1 and tonumber(_hour) ~= tonumber(v223) then
-                                            pcall(function()
-                                                u209 = {_hour}
-                                            end)
+                                            pcall(function() u209 = {_hour} end)
                                         elseif u219 == tostring(v223) then
                                             v218 = false
                                         end
@@ -323,7 +320,7 @@ v62.Mics:AddButton({
                                     if v218 then
                                         table.insert(u209, u219)
                                         pcall(function()
-                                            TeleportService:TeleportToPlaceInstance(_PlaceId, u219, LocalPlayer)
+                                            game:GetService('TeleportService'):TeleportToPlaceInstance(_PlaceId, u219, game.Players.LocalPlayer)
                                         end)
                                         task.wait(0.1)
                                     end
@@ -333,9 +330,7 @@ v62.Mics:AddButton({
 
                         task.spawn(function()
                             while task.wait(1) do
-                                pcall(function()
-                                    TPReturner()
-                                end)
+                                pcall(function() TPReturner() end)
                             end
                         end)
                     end,
@@ -350,7 +345,7 @@ v62.Mics:AddButton({
 })
 
 v62.Mics:AddButton({
-    Title = 'Low Server (Tối ưu giảm lag đồ họa)',
+    Title = 'Low Server',
     Description = '',
     Callback = function()
         u61:Dialog({
@@ -360,8 +355,7 @@ v62.Mics:AddButton({
                 {
                     Title = 'Ok',
                     Callback = function()
-                        -- Tắt chi tiết nước
-                        local terrain = Workspace:FindFirstChildOfClass('Terrain')
+                        local terrain = game:GetService('Workspace'):FindFirstChildOfClass('Terrain')
                         if terrain then
                             terrain.WaterWaveSize = 0
                             terrain.WaterWaveSpeed = 0
@@ -369,12 +363,11 @@ v62.Mics:AddButton({
                             terrain.WaterTransparency = 0
                         end
                         
-                        Lighting.GlobalShadows = false
-                        Lighting.FogEnd = 9e9
+                        game:GetService('Lighting').GlobalShadows = false
+                        game:GetService('Lighting').FogEnd = 9e9
                         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
 
-                        -- Tối ưu: Chỉ quét Workspace thay vì toàn bộ game
-                        for _, v227 in pairs(Workspace:GetDescendants()) do
+                        for _, v227 in pairs(game:GetService('Workspace'):GetDescendants()) do
                             if v227:IsA('BasePart') then
                                 v227.Material = Enum.Material.Plastic
                                 v227.Reflectance = 0
@@ -388,16 +381,15 @@ v62.Mics:AddButton({
                             end
                         end
 
-                        -- Tối ưu: Chỉ quét trong Lighting
-                        for _, v231 in pairs(Lighting:GetDescendants()) do
+                        for _, v231 in pairs(game:GetService('Lighting'):GetDescendants()) do
                             if v231:IsA('PostEffect') then
                                 v231.Enabled = false
                             end
                         end
 
-                        Workspace.DescendantAdded:Connect(function(p232)
+                        game:GetService('Workspace').DescendantAdded:Connect(function(p232)
                             if p232:IsA('ForceField') or p232:IsA('Sparkles') or p232:IsA('Smoke') or p232:IsA('Fire') then
-                                RunService.Heartbeat:Wait()
+                                game:GetService('RunService').Heartbeat:Wait()
                                 p232:Destroy()
                             end
                         end)
@@ -428,11 +420,11 @@ v62.Settings:AddButton({
     end,
 })
 
--- Tạo nút mở menu (Mobile UI)
 local _ScreenGui = Instance.new('ScreenGui')
 local _ImageButton = Instance.new('ImageButton')
 
-_ScreenGui.Parent = game.CoreGui -- Nên dùng CoreGui để tránh bị bay mất khi reset nhân vật
+local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+_ScreenGui.Parent = success and coreGui or game.Players.LocalPlayer:WaitForChild('PlayerGui')
 _ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 _ScreenGui.ResetOnSpawn = false
 _ImageButton.Parent = _ScreenGui
@@ -444,7 +436,7 @@ _ImageButton.Size = UDim2.new(0, 40, 0, 40)
 _ImageButton.Image = 'rbxassetid://113641162726631'
 
 _ImageButton.MouseButton1Down:Connect(function()
-    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F6, false, game)
+    game:GetService('VirtualInputManager'):SendKeyEvent(true, Enum.KeyCode.F6, false, game)
 end)
 
 local u237 = false
@@ -456,7 +448,7 @@ local function u244(p240)
     local v243 = {
         Position = UDim2.new(u239.X.Scale, u239.X.Offset + v241.X, u239.Y.Scale, u239.Y.Offset + v241.Y),
     }
-    TweenService:Create(_ImageButton, TweenInfo.new(0.05), v243):Play()
+    game:GetService('TweenService'):Create(_ImageButton, TweenInfo.new(0.05), v243):Play()
 end
 
 _ImageButton.InputBegan:Connect(function(p245)
@@ -473,7 +465,7 @@ _ImageButton.InputBegan:Connect(function(p245)
     end
 end)
 
-UserInputService.InputChanged:Connect(function(p246)
+game:GetService('UserInputService').InputChanged:Connect(function(p246)
     if (p246.UserInputType == Enum.UserInputType.MouseMovement or p246.UserInputType == Enum.UserInputType.Touch) and u237 then
         u244(p246)
     end
