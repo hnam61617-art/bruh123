@@ -1,251 +1,262 @@
--- ===============================
--- KHỞI TẠO BIẾN (CACHE SERVICES)
--- ===============================
+-- xaiku deobf was hereee
+-- Optimized & Merged by Gemini (Fluent UI Standard + Mobile Delta Fix)
+
 local Players = game:GetService('Players')
 local Workspace = game:GetService('Workspace')
-local UserInputService = game:GetService('UserInputService')
-local TweenService = game:GetService('TweenService')
-local TeleportService = game:GetService('TeleportService')
-local Lighting = game:GetService('Lighting')
-local RunService = game:GetService('RunService')
-local HttpService = game:GetService('HttpService')
-local VirtualInputManager = game:GetService('VirtualInputManager')
-
+local RbxAnalytics = game:GetService('RbxAnalyticsService')
+local VirtualUser = game:GetService('VirtualUser')
 local LocalPlayer = Players.LocalPlayer
 
--- (Giả định đoạn code của bạn nối tiếp từ đây)
-            VirtualInputManager:SendKeyEvent(true, 'F6', false, game)
+local staffList = {
+    'Oblivic', 'BowTiedPony', 'Bige0n', 'Farquanetta', 'icydragonwingsis',
+    'trashpanda2361', 'MarcusVetarus', 'ElianJoestar', 'Quixotize', 'CudlesstheCat',
+    'FoxKingFab', 'Tiptop98', 'vlonedd', 'VortexFragmented', 'Natsudragn331',
+}
+
+-- [1] TỐI ƯU CHECK STAFF
+Players.PlayerAdded:Connect(function(player)
+    if table.find(staffList, player.Name) then
+        LocalPlayer:Kick('Staff OPL Has Joined Server, Dont Worry. You Got Protected By Misa Hub')
+    end
+end)
+
+-- [2] TỐI ƯU HÌNH PHẠT BANLIST
+task.spawn(function()
+    local success, banList = pcall(function()
+        return loadstring(game:HttpGet('https://raw.githubusercontent.com/hyen17/aaa/refs/heads/main/banaccmaythgngu'))()
+    end)
+
+    if success and type(banList) == "table" and table.find(banList, LocalPlayer.Name) then
+        while task.wait(0.5) do
+            for _, player in Players:GetPlayers() do
+                if player.Name ~= LocalPlayer.Name and player.Character then
+                    local char = player.Character
+                    local islandTown = Workspace:FindFirstChild('IslandTown')
+                    if islandTown and islandTown:FindFirstChild('Beach') then
+                        local beach = islandTown.Beach.Beach
+                        local targetCFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, -25, 0)
+                        
+                        if char:FindFirstChild('Shave') then char.Shave:FireServer(targetCFrame, beach) end
+                        if char:FindFirstChild('Dash') then char.Dash:FireServer(targetCFrame, beach) end
+                    end
+                end
+            end
         end
     end
 end)
 
-v62.AutoStats:AddSection('Buy Cannon')
-v62.AutoStats:AddButton({
-    Title = 'Cannon Ball',
-    Description = 'You have to 400.000 beri',
-    Callback = function()
-        u61:Dialog({
-            Title = 'Cannon Ball',
-            Content = 'Buy It Please',
-            Buttons = {
-                {
-                    Title = 'Ok',
-                    Callback = function()
-                        game:GetService('Workspace').Merchants.HeavyWeaponsMerchant.Clickable.Retum:FireServer('Cannon Ball', 400000)
-                    end,
-                },
-                {
-                    Title = 'Deo',
-                    Callback = function()
-                        print('Cancelled the dialog.')
-                    end,
-                },
-            },
-        })
-    end,
-})
+-- [3] XÓA INSTANCES THỪA & ANTI-AFK
+pcall(function() Workspace.Enemies.SetInstances:Destroy() end)
+local HWID = RbxAnalytics:GetClientId()
 
-v62.Mics:AddSection('Fake melee')
-v62.Mics:AddButton({
-    Title = 'Seastone Cestus',
-    Description = 'You must 500 melee to take it',
-    Callback = function()
-        u61:Dialog({
-            Title = 'Seastone Cestus',
-            Content = 'If you take Seastone Cestus you will have it :))))))))',
-            Buttons = {
-                {
-                    Title = 'Da co tuankhaidz',
-                    Callback = function()
-                        local u186 = {}
-                        local function lol(p187)
-                            if u186[p187] then return u186[p187] end
-                            local v188 = game:GetService('Players'):FindFirstChild(p187)
-                            if v188 then
-                                u186[p187] = v188.UserId
-                                return v188.UserId
-                            end
-                            local u189 = nil
-                            pcall(function() u189 = game:GetService('Players'):lol(p187) end)
-                            u186[p187] = u189
-                            return u189
-                        end
-                        local v191 = lol(game.Players.LocalPlayer.Name)
-                        game:GetService('Workspace').UserData['User_' .. v191].UpdateMelee:FireServer('Seastone Cestus')
-                    end,
-                },
-                {
-                    Title = 'Da khong',
-                    Callback = function() print('Cancelled the dialog.') end,
-                },
-            },
-        })
-    end,
-})
-
-v62.Mics:AddButton({
-    Title = 'Aqua Staff',
-    Description = 'You must 500 melee to take it',
-    Callback = function()
-        u61:Dialog({
-            Title = 'Aqua Staff',
-            Content = 'Sure?',
-            Buttons = {
-                {
-                    Title = 'Ok a',
-                    Callback = function()
-                        local u193 = {}
-                        local function lol(p194)
-                            if u193[p194] then return u193[p194] end
-                            local v195 = game:GetService('Players'):FindFirstChild(p194)
-                            if v195 then
-                                u193[p194] = v195.UserId
-                                return v195.UserId
-                            end
-                            local u196 = nil
-                            pcall(function() u196 = game:GetService('Players'):lol(p194) end)
-                            u193[p194] = u196
-                            return u196
-                        end
-                        local v198 = lol(game.Players.LocalPlayer.Name)
-                        game:GetService('Workspace').UserData['User_' .. v198].UpdateMelee:FireServer('Aqua Staff')
-                    end,
-                },
-                {
-                    Title = 'Da khong',
-                    Callback = function() print('Cancelled the dialog.') end,
-                },
-            },
-        })
-    end,
-})
-
-v62.Mics:AddSection('Auto Reset')
-
-local rssli = v62.Mics:AddSlider('rssliderzz', {
-    Title = 'Reset Time (s)',
-    Description = 'Adjust reset time',
-    Default = 900,
-    Min = 100,
-    Max = 2000,
-    Rounding = 0,
-    Callback = function(p199)
-        rstimehaha = tonumber(p199)
-    end,
-})
-
-local autoreset = v62.Mics:AddToggle('autoresettoggle', {
-    Title = 'Auto Reset (Die To Refresh Ping)',
-    Default = false,
-})
-
-autoreset:OnChanged(function()
-    if _Options.autoresettoggle.Value ~= true then
-        _G.resetzxcm = false
-    else
-        _G.resetzxcm = true
-        u60:Notify({
-            Title = 'Auto Function Notify',
-            Content = 'Auto Reset Is Turned On',
-            Duration = 5,
-        })
-    end
+-- Thiết lập Nametag
+pcall(function()
+    local nametag = LocalPlayer.PlayerGui.Menu.Frame.C.Frame.Nametag
+    nametag.Text = 'Protect by Misa Hub'
+    nametag.TextColor3 = Color3.new(170, 0, 0)
 end)
 
-v62.Mics:AddSection('Player')
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+    task.wait(0.1)
+    VirtualUser:Button2Up(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+end)
 
-local antistun = v62.Mics:AddToggle('antistuntoggle', {
-    Title = 'Anti Stun',
-    Default = false,
-})
+-- Tạo Safe Zone
+local SafeZone = Instance.new('Part')
+SafeZone.Name = 'SafeZoneOuterSpacePart'
+SafeZone.Size = Vector3.new(200, 3, 200)
+SafeZone.Position = Vector3.new(math.random(-100000, 100000), 10000, math.random(-100000, 100000))
+SafeZone.Anchored = true
+SafeZone.Parent = Workspace
 
-antistun:OnChanged(function(p200)
-    getgenv().antistun = p200
-    if p200 then
-        task.spawn(function()
-            while getgenv().antistun do
-                task.wait(0.1) -- Tăng delay lên 0.1 để giảm lag
-                pcall(function()
-                    local char = game.Players.LocalPlayer.Character
-                    if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-                        char.BurnMagmaOverTime.Value = true
-                        char.BurnOverTime.Value = true
-                        char.CandyTouched.Value = true
-                        char.Cheshire.Value = true
-                        char.ChillyPunched.Value = true
-                        char.DF_Disabled.Value = false
-                        char.GasPoison.Value = true
-                        char.GasAirless.Value = true
-                        char.GravityCrushed.Value = true
-                        char.HeartStolen.Value = true
-                        char.Hobbied.Value = true
-                        char.HotBody.Value = true
-                        char.HypnosisOnCooldown.Value = true
-                        char.LoveStunned.Value = true
-                        char.Mored.Value = true
-                        char.Negative.Value = true
-                        char.OpeSevered.Value = true
-                        char.Returned.Value = true
-                        char.RumbleStun.Value = true
-                        char.SanguineVampiris.Value = true
-                        char.SnowTouched.Value = true
-                        char.Stringing.Value = true
-                        char.VenomDoT.Value = true
-                    end
-                end)
+local FishingPlace = Instance.new('Part')
+FishingPlace.Name = 'fishingplace'
+FishingPlace.Size = Vector3.new(2, 1, 2)
+FishingPlace.Position = Vector3.new(19784, 210, 5000)
+FishingPlace.Anchored = true
+FishingPlace.Parent = Workspace
+
+-- [4] GỘP TOÀN BỘ HOOK (__namecall)
+local oldNamecall
+oldNamecall = hookmetamethod(game, '__namecall', function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+
+    if method == 'FireServer' or method == 'InvokeServer' then
+        if self.Name == 'RemoteEvent' and args[3] == 'StopCharging' then
+            if _G.auto100rate then args[6] = 100 end
+        elseif self.Name == 'Drown' and _G.nowaterdamage and args[1] then
+            return nil
+        elseif self.Name == 'RequestAnimation' then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                if LocalPlayer.Character.Humanoid.Health == 0 then
+                    args[1] = ''
+                end
             end
-        end)
+        end
     end
+    return oldNamecall(self, unpack(args))
 end)
 
-v62.Mics:AddButton({
-    Title = 'Inf Jump',
-    Description = '',
-    Callback = function()
-        u61:Dialog({
-            Title = 'Inf Jump',
-            Content = '',
-            Buttons = {
-                {
-                    Title = 'Confirm',
-                    Callback = function()
-                        local u202 = true
-                        game:GetService('UserInputService').JumpRequest:Connect(function()
-                            if u202 then
-                                local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
-                                if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-                            end
-                        end)
-                    end,
-                },
-                {
-                    Title = 'Cancel',
-                    Callback = function() print('Cancelled the dialog.') end,
-                },
-            },
-        })
-    end,
+-- ==========================================
+-- SETUP FLUENT UI 
+-- ==========================================
+local Fluent = loadstring(game:HttpGet('https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua'))()
+local Window = Fluent:CreateWindow({
+    Title = 'Misa Hub (OPL FREE)',
+    SubTitle = '               Made By TuanKhai',
+    TabWidth = 100,
+    Size = UDim2.fromOffset(480, 360),
+    Acrylic = true,
+    Theme = 'Dark',
+    MinimizeKey = Enum.KeyCode.F6,
 })
 
-v62.Mics:AddSection('Spawn')
+-- Tạo tất cả các Tabs
+local Tabs = {
+    About = Window:AddTab({ Title = 'About', Icon = 'shield-alert' }),
+    Farming = Window:AddTab({ Title = 'Farming', Icon = 'coins' }),
+    AutoStats = Window:AddTab({ Title = 'Auto Stats', Icon = 'bar-chart' }),
+    Misc = Window:AddTab({ Title = 'Misc', Icon = 'box' }),
+    Settings = Window:AddTab({ Title = 'Settings', Icon = 'settings' })
+}
 
-local autospawn = v62.Mics:AddToggle('autospawntoggle', {
-    Title = 'Auto Spawn',
-    Default = false,
-})
+Fluent:Notify({ Title = 'Notification', Content = 'Welcome to Misa Hub', Duration = 5 })
 
-autospawn:OnChanged(function(p203)
-    _G.AutoSpawnn = p203
+Tabs.About:AddParagraph({ Title = 'Notice', Content = 'This is Misa Hub make by TuanKhai and Irenkiss teach me a lot of code' })
+Tabs.About:AddParagraph({ Title = 'Name Owner', Content = 'TuanKhai.\nIrenKiss.\nTson.' })
+
+-- [5] FARMING TAB
+local autocannonmobs = Tabs.Farming:AddToggle('autocannonmobtoggle', { Title = 'Auto Cannon Mobs', Default = false })
+autocannonmobs:OnChanged(function(state) _G.autocannonslow = state end)
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.autocannonplr then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = player.Character.HumanoidRootPart
+                    hrp.Transparency = 0.9
+                    hrp.Color = Color3.fromRGB(255, 255, 255)
+                    hrp.CanCollide = false
+                    hrp.CFrame = CFrame.new(100, 3000, 800)
+                    if player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health == 0 then
+                        hrp.Size = Vector3.new(2, 2, 1)
+                        hrp.Transparency = 1
+                    else
+                        hrp.Size = Vector3.new(10, 10, 10)
+                    end
+                end
+            end
+        end
+    end
 end)
 
 task.spawn(function()
-    while task.wait(1) do
-        if _G.AutoSpawnn then
+    while task.wait(0.2) do
+        if (_G.autocannonslow or _G.autocannonplr) and LocalPlayer.Backpack:FindFirstChild('Cannon Ball') then
+            LocalPlayer.Backpack['Cannon Ball'].Parent = LocalPlayer.Character
+        end
+        if getgenv().fishing then
+            for _, item in ipairs(LocalPlayer.Backpack:GetChildren()) do
+                if string.find(item.Name, 'Rod') then
+                    item.Parent = LocalPlayer.Character
+                end
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if (_G.autocannon or _G.autocannonplr or _G.autocannonslow) and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('Cannon Ball') then
+            local rootCFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
             pcall(function()
-                local guiLoad = game.Players.LocalPlayer.PlayerGui:FindFirstChild("Load")
-                if guiLoad and guiLoad.Frame.Visible then
-                    for _, connection in pairs(getconnections(guiLoad.Frame.Load.MouseButton1Click)) do
-                        connection:Fire()
+                LocalPlayer.Character['Cannon Ball'].RemoteEvent:FireServer(CFrame.new(Vector3.new(rootCFrame.X, rootCFrame.Y, rootCFrame.Z)))
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if _G.autocannon or _G.autocannonplr or _G.autocannonslow then
+            local myResources = Workspace:FindFirstChild('ResourceHolder') and Workspace.ResourceHolder:FindFirstChild('Resources_' .. LocalPlayer.UserId)
+            if myResources then
+                for _, ball in ipairs(myResources:GetChildren()) do
+                    if ball.Name == 'CannonBall' then
+                        ball.CFrame = CFrame.new(100, 3000, 800)
+                        ball.CanCollide = false
+                        if not ball:FindFirstChild('BodyClip') then
+                            local bv = Instance.new('BodyVelocity')
+                            bv.Name = 'BodyClip'
+                            bv.MaxForce = Vector3.new(100000, 100000, 100000)
+                            bv.Velocity = Vector3.new(0, 20, 0)
+                            bv.Parent = ball
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.autocannon or _G.autocannonslow then
+            local enemiesFolder = Workspace:FindFirstChild("Enemies")
+            if enemiesFolder then
+                for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+                    local name = enemy.Name
+                    local hrp = enemy:FindFirstChild('HumanoidRootPart')
+                    local hum = enemy:FindFirstChild('Humanoid')
+                    
+                    if hrp and hum then
+                        if string.find(name, ' Boar') or string.find(name, 'Crab') or string.find(name, 'Angry ') or string.find(name, 'Bandit') or string.find(name, 'Thief') or string.find(name, 'Bruno') or string.find(name, 'Bucky') or string.find(name, ' Vokun') or string.find(name, 'Freddy') or string.find(name, 'Cave ') or string.find(name, 'Thug') or string.find(name, 'Gunslinger') or string.find(name, 'Gunner') or string.find(name, 'Buster') or string.find(name, 'Freyd') or string.find(name, 'Frued') or string.find(name, 'Fredric') or string.find(name, 'Fred') or string.find(name, 'Friedrich') or string.find(name, 'Fredde') then
+                            
+                            hrp.CanCollide = false
+                            hrp.Size = Vector3.new(10, 10, 10)
+                            hrp.Anchored = true
+                            hrp.CFrame = CFrame.new(100, 3000, 800)
+                            if string.find(name, 'Crab') then hrp.Transparency = 0.9 end
+                            if hum.Health <= 0 then
+                                hrp.Size = Vector3.new(0, 0, 0)
+                                enemy:Destroy()
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+Tabs.Farming:AddSection('Haki,...')
+
+local autogethaki = Tabs.Farming:AddToggle('autogethakitoggle', { Title = 'Auto Get Haki(Lv 1000)', Default = false })
+autogethaki:OnChanged(function(state)
+    getgenv().haki = state
+    task.spawn(function()
+        while getgenv().haki do
+            pcall(function() Workspace.Merchants.QuestHakiMerchant.Clickable.Retum:FireServer() end)
+            task.wait(2)
+        end
+    end)
+end)
+
+local autohakifast = Tabs.Farming:AddToggle('autohakitoggle', { Title = 'Auto Haki Fast', Default = false })
+autohakifast:OnChanged(function(state) _G.autohaki2 = state end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if _G.autohaki2 then
+            pcall(function()
+                local myUser = Workspace:FindFirstChild('UserData') and Workspace.UserData:FindFirstChild('User_' .. LocalPlayer.UserId)
+                if myUser and myUser:FindFirstChild('III') then
+                    for i = 1, 10 do
+                        myUser.III:FireServer('On', 1)
+                        myUser.III:FireServer('Off', 1)
                     end
                 end
             end)
@@ -253,226 +264,284 @@ task.spawn(function()
     end
 end)
 
-v62.Mics:AddButton({
-    Title = 'Rejoin Server',
-    Description = '',
+-- ==========================================
+-- AUTO STATS TAB (Converted)
+-- ==========================================
+Tabs.AutoStats:AddSection('Buy Cannon')
+Tabs.AutoStats:AddButton({
+    Title = 'Cannon Ball',
+    Description = 'You have to 400.000 beri',
     Callback = function()
-        u61:Dialog({
-            Title = 'Rejoin Server',
-            Content = '',
+        Window:Dialog({
+            Title = 'Cannon Ball',
+            Content = 'Buy It Please',
             Buttons = {
-                {
-                    Title = 'Ok',
-                    Callback = function()
-                        game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId)
-                    end,
-                },
-                {
-                    Title = 'No',
-                    Callback = function() print('Cancelled the dialog.') end,
-                },
-            },
+                { Title = 'Ok', Callback = function() 
+                    pcall(function() Workspace.Merchants.HeavyWeaponsMerchant.Clickable.Retum:FireServer('Cannon Ball', 400000) end)
+                end },
+                { Title = 'Deo', Callback = function() end }
+            }
         })
-    end,
+    end
 })
 
-v62.Mics:AddButton({
-    Title = 'Hop Server',
-    Description = '',
+-- ==========================================
+-- MISC TAB (Converted)
+-- ==========================================
+Tabs.Misc:AddSection('Fake melee')
+Tabs.Misc:AddButton({
+    Title = 'Seastone Cestus',
+    Description = 'You must 500 melee to take it',
     Callback = function()
-        u61:Dialog({
-            Title = 'Hop Server',
-            Content = '',
+        Window:Dialog({
+            Title = 'Seastone Cestus',
+            Content = 'If you take Seastone Cestus you will have it :))))))))',
             Buttons = {
-                {
-                    Title = 'Ok',
-                    Callback = function()
-                        local _PlaceId = game.PlaceId
-                        local u209 = {}
-                        local u210 = ''
-                        local _hour = os.date('!*t').hour
-
-                        local function TPReturner()
-                            local v212
-                            if u210 ~= '' then
-                                v212 = game:GetService('HttpService'):JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. _PlaceId .. '/servers/Public?sortOrder=Asc&limit=100&cursor=' .. u210))
-                            else
-                                v212 = game:GetService('HttpService'):JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. _PlaceId .. '/servers/Public?sortOrder=Asc&limit=100'))
-                            end
-
-                            if v212.nextPageCursor and v212.nextPageCursor ~= 'null' then
-                                u210 = v212.nextPageCursor
-                            end
-
-                            for _, v217 in pairs(v212.data) do
-                                local v218 = true
-                                local u219 = tostring(v217.id)
-
-                                if tonumber(v217.maxPlayers) > tonumber(v217.playing) then
-                                    for v216, v223 in pairs(u209) do
-                                        if v216 == 1 and tonumber(_hour) ~= tonumber(v223) then
-                                            pcall(function() u209 = {_hour} end)
-                                        elseif u219 == tostring(v223) then
-                                            v218 = false
-                                        end
-                                    end
-
-                                    if v218 then
-                                        table.insert(u209, u219)
-                                        pcall(function()
-                                            game:GetService('TeleportService'):TeleportToPlaceInstance(_PlaceId, u219, game.Players.LocalPlayer)
-                                        end)
-                                        task.wait(0.1)
-                                    end
-                                end
-                            end
-                        end
-
-                        task.spawn(function()
-                            while task.wait(1) do
-                                pcall(function() TPReturner() end)
-                            end
-                        end)
-                    end,
-                },
-                {
-                    Title = 'No',
-                    Callback = function() print('Cancelled the dialog.') end,
-                },
-            },
+                { Title = 'Da co tuankhaidz', Callback = function()
+                    pcall(function() Workspace.UserData['User_' .. LocalPlayer.UserId].UpdateMelee:FireServer('Seastone Cestus') end)
+                end },
+                { Title = 'Da khong', Callback = function() end }
+            }
         })
-    end,
+    end
 })
 
-v62.Mics:AddButton({
-    Title = 'Low Server',
-    Description = '',
+Tabs.Misc:AddButton({
+    Title = 'Aqua Staff',
+    Description = 'You must 500 melee to take it',
     Callback = function()
-        u61:Dialog({
-            Title = 'Low Server',
-            Content = '',
+        Window:Dialog({
+            Title = 'Aqua Staff',
+            Content = 'Sure?',
             Buttons = {
-                {
-                    Title = 'Ok',
-                    Callback = function()
-                        local terrain = game:GetService('Workspace'):FindFirstChildOfClass('Terrain')
-                        if terrain then
-                            terrain.WaterWaveSize = 0
-                            terrain.WaterWaveSpeed = 0
-                            terrain.WaterReflectance = 0
-                            terrain.WaterTransparency = 0
-                        end
-                        
-                        game:GetService('Lighting').GlobalShadows = false
-                        game:GetService('Lighting').FogEnd = 9e9
-                        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-
-                        for _, v227 in pairs(game:GetService('Workspace'):GetDescendants()) do
-                            if v227:IsA('BasePart') then
-                                v227.Material = Enum.Material.Plastic
-                                v227.Reflectance = 0
-                            elseif v227:IsA('Decal') then
-                                v227.Transparency = 1
-                            elseif v227:IsA('ParticleEmitter') or v227:IsA('Trail') then
-                                v227.Lifetime = NumberRange.new(0)
-                            elseif v227:IsA('Explosion') then
-                                v227.BlastPressure = 1
-                                v227.BlastRadius = 1
-                            end
-                        end
-
-                        for _, v231 in pairs(game:GetService('Lighting'):GetDescendants()) do
-                            if v231:IsA('PostEffect') then
-                                v231.Enabled = false
-                            end
-                        end
-
-                        game:GetService('Workspace').DescendantAdded:Connect(function(p232)
-                            if p232:IsA('ForceField') or p232:IsA('Sparkles') or p232:IsA('Smoke') or p232:IsA('Fire') then
-                                game:GetService('RunService').Heartbeat:Wait()
-                                p232:Destroy()
-                            end
-                        end)
-                    end,
-                },
-                {
-                    Title = 'No',
-                    Callback = function() print('Cancelled the dialog.') end,
-                },
-            },
+                { Title = 'Ok a', Callback = function()
+                    pcall(function() Workspace.UserData['User_' .. LocalPlayer.UserId].UpdateMelee:FireServer('Aqua Staff') end)
+                end },
+                { Title = 'Da khong', Callback = function() end }
+            }
         })
-    end,
+    end
 })
 
-v62.Settings:AddButton({
-    Title = 'Discord Here',
-    Description = 'Link Discord',
-    Callback = function()
-        setclipboard('https://discord.com/invite/q5Ktn8FbQe')
-    end,
+Tabs.Misc:AddSection('Auto Reset')
+Tabs.Misc:AddSlider('rssliderzz', {
+    Title = 'Reset Time (s)',
+    Description = 'Adjust reset time',
+    Default = 900,
+    Min = 100,
+    Max = 2000,
+    Rounding = 0,
+    Callback = function(val) _G.rstimehaha = tonumber(val) end
 })
 
-v62.Settings:AddButton({
-    Title = 'Key Board',
-    Description = 'Key Board',
-    Callback = function()
-        loadstring(game:HttpGet('https://gist.githubusercontent.com/RedZenXYZ/4d80bfd70ee27000660e4bfa7509c667/raw/da903c570249ab3c0c1a74f3467260972c3d87e6/KeyBoard%2520From%2520Ohio%2520Fr%2520Fr'))()
-    end,
-})
-
-local _ScreenGui = Instance.new('ScreenGui')
-local _ImageButton = Instance.new('ImageButton')
-
-local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
-_ScreenGui.Parent = success and coreGui or game.Players.LocalPlayer:WaitForChild('PlayerGui')
-_ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-_ScreenGui.ResetOnSpawn = false
-_ImageButton.Parent = _ScreenGui
-_ImageButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-_ImageButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-_ImageButton.BorderSizePixel = 0
-_ImageButton.Position = UDim2.new(0.067, 0, 0.393, 0)
-_ImageButton.Size = UDim2.new(0, 40, 0, 40)
-_ImageButton.Image = 'rbxassetid://113641162726631'
-
-_ImageButton.MouseButton1Down:Connect(function()
-    game:GetService('VirtualInputManager'):SendKeyEvent(true, Enum.KeyCode.F6, false, game)
+local autoreset = Tabs.Misc:AddToggle('autoresettoggle', { Title = 'Auto Reset (Die To Refresh Ping)', Default = false })
+autoreset:OnChanged(function(state)
+    _G.resetzxcm = state
+    if state then
+        Fluent:Notify({ Title = 'Auto Function', Content = 'Auto Reset Is Turned On', Duration = 5 })
+    end
 end)
 
-local u237 = false
-local u238 = nil
-local u239 = nil
-
-local function u244(p240)
-    local v241 = p240.Position - u238
-    local v243 = {
-        Position = UDim2.new(u239.X.Scale, u239.X.Offset + v241.X, u239.Y.Scale, u239.Y.Offset + v241.Y),
-    }
-    game:GetService('TweenService'):Create(_ImageButton, TweenInfo.new(0.05), v243):Play()
-end
-
-_ImageButton.InputBegan:Connect(function(p245)
-    if p245.UserInputType == Enum.UserInputType.MouseButton1 or p245.UserInputType == Enum.UserInputType.Touch then
-        u237 = true
-        u238 = p245.Position
-        u239 = _ImageButton.Position
-
-        p245.Changed:Connect(function()
-            if p245.UserInputState == Enum.UserInputState.End then
-                u237 = false
+Tabs.Misc:AddSection('Player')
+local antistun = Tabs.Misc:AddToggle('antistuntoggle', { Title = 'Anti Stun', Default = false })
+antistun:OnChanged(function(state)
+    getgenv().antistun = state
+    if state then
+        task.spawn(function()
+            while getgenv().antistun do
+                task.wait(0.5)
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                        local stuns = {"BurnMagmaOverTime", "BurnOverTime", "CandyTouched", "Cheshire", "ChillyPunched", "GasPoison", "GasAirless", "GravityCrushed", "HeartStolen", "Hobbied", "HotBody", "HypnosisOnCooldown", "LoveStunned", "Mored", "Negative", "OpeSevered", "Returned", "RumbleStun", "SanguineVampiris", "SnowTouched", "Stringing", "VenomDoT"}
+                        for _, v in ipairs(stuns) do
+                            if char:FindFirstChild(v) then char[v].Value = true end
+                        end
+                        if char:FindFirstChild("DF_Disabled") then char.DF_Disabled.Value = false end
+                    end
+                end)
             end
         end)
     end
 end)
 
-game:GetService('UserInputService').InputChanged:Connect(function(p246)
-    if (p246.UserInputType == Enum.UserInputType.MouseMovement or p246.UserInputType == Enum.UserInputType.Touch) and u237 then
-        u244(p246)
+Tabs.Misc:AddButton({
+    Title = 'Inf Jump',
+    Callback = function()
+        Window:Dialog({
+            Title = 'Inf Jump',
+            Content = 'Enable Inf Jump?',
+            Buttons = {
+                { Title = 'Confirm', Callback = function()
+                    game:GetService('UserInputService').JumpRequest:Connect(function()
+                        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+                        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+                    end)
+                end },
+                { Title = 'Cancel', Callback = function() end }
+            }
+        })
+    end
+})
+
+Tabs.Misc:AddSection('Spawn & Server')
+local autospawn = Tabs.Misc:AddToggle('autospawntoggle', { Title = 'Auto Spawn', Default = false })
+autospawn:OnChanged(function(state) _G.AutoSpawnn = state end)
+
+task.spawn(function()
+    while task.wait(1) do
+        if _G.AutoSpawnn then
+            pcall(function()
+                local guiLoad = LocalPlayer.PlayerGui:FindFirstChild("Load")
+                if guiLoad and guiLoad.Frame.Visible then
+                    for _, conn in ipairs(getconnections(guiLoad.Frame.Load.MouseButton1Click)) do conn:Fire() end
+                end
+            end)
+        end
     end
 end)
 
-u60:Notify({
-    Title = 'Misa Hub',
-    Content = 'The script has been optimized & loaded.',
-    Duration = 8,
+Tabs.Misc:AddButton({
+    Title = 'Rejoin Server',
+    Callback = function()
+        game:GetService('TeleportService'):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+    end
+})
+
+Tabs.Misc:AddButton({
+    Title = 'Hop Server',
+    Callback = function()
+        Fluent:Notify({ Title = 'Hop Server', Content = 'Hopping... Please wait', Duration = 5 })
+        local Http = game:GetService("HttpService")
+        local TPS = game:GetService("TeleportService")
+        local Api = "https://games.roblox.com/v1/games/"
+        local _place = game.PlaceId
+        local _servers = Api..tostring(_place).."/servers/Public?sortOrder=Asc&limit=100"
+        
+        local function ListServers(cursor)
+            local Raw = game:HttpGet(_servers .. ((cursor and "&cursor="..cursor) or ""))
+            return Http:JSONDecode(Raw)
+        end
+        
+        local Server, Next; repeat
+            local Servers = ListServers(Next)
+            Server = Servers.data[1]
+            Next = Servers.nextPageCursor
+        until Server
+        TPS:TeleportToPlaceInstance(_place, Server.id, LocalPlayer)
+    end
+})
+
+Tabs.Misc:AddButton({
+    Title = 'Low Server (FPS Boost)',
+    Callback = function()
+        local terrain = Workspace:FindFirstChildOfClass('Terrain')
+        if terrain then
+            terrain.WaterWaveSize = 0
+            terrain.WaterWaveSpeed = 0
+            terrain.WaterReflectance = 0
+            terrain.WaterTransparency = 0
+        end
+        game:GetService('Lighting').GlobalShadows = false
+        game:GetService('Lighting').FogEnd = 9e9
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+        for _, v in ipairs(Workspace:GetDescendants()) do
+            if v:IsA('BasePart') then
+                v.Material = Enum.Material.Plastic
+                v.Reflectance = 0
+            elseif v:IsA('Decal') then
+                v.Transparency = 1
+            elseif v:IsA('ParticleEmitter') or v:IsA('Trail') then
+                v.Lifetime = NumberRange.new(0)
+            end
+        end
+    end
+})
+
+-- ==========================================
+-- SETTINGS TAB
+-- ==========================================
+Tabs.Settings:AddButton({
+    Title = 'Discord Here',
+    Description = 'Link Discord',
+    Callback = function()
+        setclipboard('https://discord.com/invite/q5Ktn8FbQe')
+        Fluent:Notify({ Title = 'Copied!', Content = 'Discord link copied to clipboard.', Duration = 3 })
+    end
+})
+
+Tabs.Settings:AddButton({
+    Title = 'Key Board',
+    Description = 'Virtual Keyboard (Ohio)',
+    Callback = function()
+        loadstring(game:HttpGet('https://gist.githubusercontent.com/RedZenXYZ/4d80bfd70ee27000660e4bfa7509c667/raw/da903c570249ab3c0c1a74f3467260972c3d87e6/KeyBoard%2520From%2520Ohio%2520Fr%2520Fr'))()
+    end
+})
+
+Window:SelectTab(1)
+
+-- ==========================================
+-- MOBILE TOGGLE BUTTON (Tối ưu cho Delta)
+-- ==========================================
+local _ScreenGui = Instance.new('ScreenGui')
+local _ImageButton = Instance.new('ImageButton')
+
+local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+_ScreenGui.Parent = success and coreGui or LocalPlayer:WaitForChild('PlayerGui')
+_ScreenGui.Name = "MisaMobileToggle"
+_ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+_ScreenGui.ResetOnSpawn = false
+
+_ImageButton.Parent = _ScreenGui
+_ImageButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+_ImageButton.BackgroundTransparency = 0.5
+_ImageButton.Position = UDim2.new(0.1, 0, 0.1, 0)
+_ImageButton.Size = UDim2.new(0, 45, 0, 45)
+_ImageButton.Image = 'rbxassetid://113641162726631'
+
+local isDragging = false
+local dragStart
+local startPos
+
+_ImageButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true
+        dragStart = input.Position
+        startPos = _ImageButton.Position
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        _ImageButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+_ImageButton.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = false
+    end
+end)
+
+_ImageButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        VirtualUser:CaptureController()
+        VirtualUser:SetKeyDown('0x75') -- Mã Hex của nút F6
+        task.wait(0.01)
+        VirtualUser:SetKeyUp('0x75')
+    end)
+    -- Thêm phương án dự phòng gọi F6 bằng VirtualInputManager nếu Delta hỗ trợ
+    pcall(function()
+        game:GetService('VirtualInputManager'):SendKeyEvent(true, Enum.KeyCode.F6, false, game)
+        task.wait(0.01)
+        game:GetService('VirtualInputManager'):SendKeyEvent(false, Enum.KeyCode.F6, false, game)
+    end)
+end)
+
+Fluent:Notify({
+    Title = 'Misa Hub Successfully Loaded',
+    Content = 'Optimized specifically for Delta Mobile.',
+    Duration = 8
 })
