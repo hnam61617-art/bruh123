@@ -295,24 +295,64 @@ end)
 
 Tabs.Farming:AddSection('Compass (Quest Merchant)')
 
-local getcompass1 = Tabs.Farming:AddToggle('getcompass1toggle', { Title = 'Get 1 Compass', Default = false })
+local getcompass1 = Tabs.Farming:AddToggle('getcompass1toggle', { Title = 'Auto Get 1 Compass (Extreme Optimized)', Default = false })
+
 getcompass1:OnChanged(function(state)
     getgenv().autosam1 = state
+    
     task.spawn(function()
         while getgenv().autosam1 do
-            pcall(function() Workspace.Merchants.QuestMerchant.Clickable.Retum:FireServer('Claim1') end)
-            task.wait(1)
-        end
-    end)
-end)
-
-local getcompass10 = Tabs.Farming:AddToggle('getcompass10toggle', { Title = 'Get 10 Compass', Default = false })
-getcompass10:OnChanged(function(state)
-    getgenv().autosam10 = state
-    task.spawn(function()
-        while getgenv().autosam10 do
-            pcall(function() Workspace.Merchants.QuestMerchant.Clickable.Retum:FireServer('Claim10') end)
-            task.wait(1)
+            local sleepTime = 1 -- Mặc định
+            local shouldSpam = false
+            
+            pcall(function()
+                -- Đường dẫn UI theo tên nhân vật của bạn
+                local timerLabel = game.Players["haidang123456edfe22"].PlayerGui.Menu.Frame.C.Frame.A.Sam.SamTimer
+                local timeText = timerLabel and timerLabel.Text
+                
+                if timeText then
+                    -- Phân tích định dạng thời gian
+                    local h, m, s = string.match(timeText, "(%d+):(%d+):(%d+)")
+                    if not h then
+                        m, s = string.match(timeText, "(%d+):(%d+)")
+                        if not m then
+                            s = string.match(timeText, "(%d+)")
+                        end
+                    end
+                    
+                    local totalSec = (tonumber(h) or 0) * 3600 + (tonumber(m) or 0) * 60 + (tonumber(s) or 0)
+                    
+                    -- LOGIC NGHỈ THEO YÊU CẦU CỦA BẠN:
+                    if totalSec > 90 then
+                        -- Còn hơn 1 phút 30 giây: 30 giây check 1 lần
+                        sleepTime = 30
+                    elseif totalSec > 30 then
+                        -- Từ 31s đến 90s: 10 giây check 1 lần
+                        sleepTime = 10
+                    elseif totalSec > 10 then
+                        -- Dưới 30 giây (đến 11s): 3 giây check 1 lần
+                        sleepTime = 3
+                    elseif totalSec > 5 then
+                        -- Từ 10s đến 6s: 1 giây check 1 lần để chuẩn bị
+                        sleepTime = 1
+                    else
+                        -- Dưới hoặc bằng 5s (hoặc chữ "Ready"): Spam
+                        shouldSpam = true
+                        sleepTime = 0.5
+                    end
+                else
+                    -- Không thấy UI (có thể đã đóng menu hoặc lỗi): Nghỉ 2 giây rồi tìm lại
+                    sleepTime = 2
+                end
+            end)
+            
+            if shouldSpam then
+                pcall(function() 
+                    workspace.Merchants.QuestMerchant.Clickable.Retum:FireServer('Claim1') 
+                end)
+            end
+            
+            task.wait(sleepTime)
         end
     end)
 end)
