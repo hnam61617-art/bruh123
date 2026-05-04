@@ -317,60 +317,79 @@ end)
 
 Tabs.Farming:AddSection('Compass (Quest Merchant)')
 
-local getcompass1 = Tabs.Farming:AddToggle('getcompass1toggle', { Title = 'Auto Get 1 Compass (Extreme Optimized)', Default = false })
+local getcompass1 = Tabs.Farming:AddToggle('getcompass1toggle', { Title = 'Auto Get 1 Compass (Tick/Time Optimized)', Default = false })
 
 getcompass1:OnChanged(function(state)
     getgenv().autosam1 = state
     
     task.spawn(function()
+        local player = game.Players.LocalPlayer
+        
+        -- Các biến lưu trữ nội bộ
+        local targetTime = 0 
+        local lastSyncTime = 0 
+        local syncInterval = 600 -- 600 giây = 10 phút
+        
         while getgenv().autosam1 do
-            local sleepTime = 1 -- Mặc định
+            local currentTime = os.time()
+            local sleepTime = 1 
             local shouldSpam = false
             
-            pcall(function()
-                -- Đường dẫn UI theo tên nhân vật của bạn
-                local timerLabel = game.Players["haidang123456edfe22"].PlayerGui.Menu.Frame.C.Frame.A.Sam.SamTimer
-                local timeText = timerLabel and timerLabel.Text
-                
-                if timeText then
-                    -- Phân tích định dạng thời gian
-                    local h, m, s = string.match(timeText, "(%d+):(%d+):(%d+)")
-                    if not h then
-                        m, s = string.match(timeText, "(%d+):(%d+)")
-                        if not m then
-                            s = string.match(timeText, "(%d+)")
+            -- 1. BƯỚC ĐỒNG BỘ UI (Chỉ chạy lần đầu hoặc khi đã qua 10 phút)
+            if currentTime - lastSyncTime >= syncInterval or targetTime == 0 then
+                pcall(function()
+                    local timerLabel = player:WaitForChild("PlayerGui"):FindFirstChild("SamTimer", true)
+                    
+                    if timerLabel and timerLabel.Text then
+                        local cleanText = string.gsub(timerLabel.Text, "<[^>]+>", "")
+                        local lowerText = string.lower(cleanText)
+                        
+                        if string.find(lowerText, "0/1") or string.find(lowerText, "ready") or string.find(lowerText, "claim") then
+                            targetTime = currentTime -- Tới giờ luôn, claim ngay
+                        else
+                            local h, m, s = string.match(cleanText, "(%d+):(%d+):(%d+)")
+                            if not h then
+                                m, s = string.match(cleanText, "(%d+):(%d+)")
+                                if not m then s = string.match(cleanText, "(%d+)") end
+                            end
+                            
+                            local totalSec = (tonumber(h) or 0) * 3600 + (tonumber(m) or 0) * 60 + (tonumber(s) or 0)
+                            
+                            -- Set mục tiêu: Thời điểm hiện tại + Tổng số giây còn lại
+                            targetTime = currentTime + totalSec
                         end
+                        -- Đánh dấu thời điểm sync thành công
+                        lastSyncTime = currentTime 
                     end
-                    
-                    local totalSec = (tonumber(h) or 0) * 3600 + (tonumber(m) or 0) * 60 + (tonumber(s) or 0)
-                    
-                    -- LOGIC NGHỈ THEO YÊU CẦU CỦA BẠN:
-                    if totalSec > 90 then
-                        -- Còn hơn 1 phút 30 giây: 30 giây check 1 lần
-                        sleepTime = 30
-                    elseif totalSec > 30 then
-                        -- Từ 31s đến 90s: 10 giây check 1 lần
-                        sleepTime = 10
-                    elseif totalSec > 10 then
-                        -- Dưới 30 giây (đến 11s): 3 giây check 1 lần
-                        sleepTime = 3
-                    elseif totalSec > 5 then
-                        -- Từ 10s đến 6s: 1 giây check 1 lần để chuẩn bị
-                        sleepTime = 1
-                    else
-                        -- Dưới hoặc bằng 5s (hoặc chữ "Ready"): Spam
-                        shouldSpam = true
-                        sleepTime = 0.5
-                    end
-                else
-                    -- Không thấy UI (có thể đã đóng menu hoặc lỗi): Nghỉ 2 giây rồi tìm lại
-                    sleepTime = 2
-                end
-            end)
+                end)
+            end
             
+            -- 2. BƯỚC MÁY TỰ ĐẾM NGƯỢC (Bỏ qua hoàn toàn UI)
+            if targetTime == 0 then
+                -- Nếu chưa sync được (UI chưa load kịp), chờ 2s rồi ráng sync lại
+                sleepTime = 2
+            else
+                -- Tính số giây còn lại bằng đồng hồ máy tính
+                local timeLeft = targetTime - os.time()
+                
+                if timeLeft > 60 then
+                    -- Còn hơn 1 phút, ngủ đông 10s check nội bộ 1 lần cho mát máy
+                    sleepTime = 10
+                elseif timeLeft > 10 then
+                    sleepTime = 3
+                elseif timeLeft > 2 then
+                    sleepTime = 1
+                else
+                    -- Bắt đầu chuỗi spam an toàn khi đếm ngược <= 2 giây
+                    shouldSpam = true
+                    sleepTime = 1 
+                end
+            end
+            
+            -- 3. THỰC THI LỆNH
             if shouldSpam then
                 pcall(function() 
-                    workspace.Merchants.QuestMerchant.Clickable.Retum:FireServer('Claim1') 
+                    Workspace.Merchants.QuestMerchant.Clickable.Retum:FireServer('Claim1') 
                 end)
             end
             
@@ -378,7 +397,6 @@ getcompass1:OnChanged(function(state)
         end
     end)
 end)
-
 local findcompass = Tabs.Farming:AddToggle('findcompasstoggle', { Title = 'Find Compass', Default = false })
 findcompass:OnChanged(function(state)
     getgenv().autofindsam = state
