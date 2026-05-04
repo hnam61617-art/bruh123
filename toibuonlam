@@ -191,6 +191,14 @@ task.spawn(function()
     end
 end)
 
+-- 1. Đưa tất cả các từ khóa cần tìm vào một danh sách (Table)
+local targetKeywords = {
+    " Boar", "Crab", "Angry ", "Bandit", "Thief", "Bruno", 
+    "Bucky", " Vokun", "Freddy", "Cave ", "Thug", "Gunslinger", 
+    "Gunner", "Buster", "Freyd", "Frued", "Fredric", "Fred", 
+    "Friedrich", "Fredde"
+}
+
 task.spawn(function()
     while task.wait(0.5) do
         if _G.autocannon or _G.autocannonslow then
@@ -198,20 +206,34 @@ task.spawn(function()
             if enemiesFolder then
                 for _, enemy in ipairs(enemiesFolder:GetChildren()) do
                     local name = enemy.Name
-                    local hrp = enemy:FindFirstChild('HumanoidRootPart')
-                    local hum = enemy:FindFirstChild('Humanoid')
+                    local isTarget = false
                     
-                    if hrp and hum then
-                        if string.find(name, ' Boar') or string.find(name, 'Crab') or string.find(name, 'Angry ') or string.find(name, 'Bandit') or string.find(name, 'Thief') or string.find(name, 'Bruno') or string.find(name, 'Bucky') or string.find(name, ' Vokun') or string.find(name, 'Freddy') or string.find(name, 'Cave ') or string.find(name, 'Thug') or string.find(name, 'Gunslinger') or string.find(name, 'Gunner') or string.find(name, 'Buster') or string.find(name, 'Freyd') or string.find(name, 'Frued') or string.find(name, 'Fredric') or string.find(name, 'Fred') or string.find(name, 'Friedrich') or string.find(name, 'Fredde') then
-                            
-                            hrp.CanCollide = false
-                            hrp.Size = Vector3.new(10, 10, 10)
-                            hrp.Anchored = true
-                            hrp.CFrame = CFrame.new(100, 3000, 800)
-                            if string.find(name, 'Crab') then hrp.Transparency = 0.9 end
+                    -- 2. Dùng string.find quét qua danh sách từ khóa
+                    for _, keyword in ipairs(targetKeywords) do
+                        if string.find(name, keyword) then
+                            isTarget = true
+                            break -- Tìm thấy từ khóa khớp là DỪNG QUÉT ngay cho nhẹ máy
+                        end
+                    end
+                    
+                    -- 3. Nếu đúng là quái cần farm thì lôi nó tới
+                    if isTarget then
+                        local hrp = enemy:FindFirstChild('HumanoidRootPart')
+                        local hum = enemy:FindFirstChild('Humanoid')
+                        
+                        if hrp and hum then
                             if hum.Health <= 0 then
                                 hrp.Size = Vector3.new(0, 0, 0)
                                 enemy:Destroy()
+                            else
+                                hrp.CanCollide = false
+                                hrp.Size = Vector3.new(10, 10, 10)
+                                hrp.Anchored = true
+                                -- Chỉ set CFrame nếu rớt ra xa (Chống lag vật lý)
+                                if (hrp.Position - Vector3.new(100, 3000, 800)).Magnitude > 5 then
+                                    hrp.CFrame = CFrame.new(100, 3000, 800)
+                                end
+                                if string.find(name, "Crab") then hrp.Transparency = 0.9 end
                             end
                         end
                     end
