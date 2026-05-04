@@ -199,41 +199,64 @@ local targetKeywords = {
     "Friedrich", "Fredde"
 }
 
+-- 1. [TỐI ƯU RAM/BỘ NHỚ] Khai báo các hằng số (Constants) ra ngoài vòng lặp
+-- Tránh việc tạo lại Vector3/CFrame hàng ngàn lần mỗi giây gây tràn RAM và kích hoạt Garbage Collector
+local FARM_POS = Vector3.new(100, 3000, 800)
+local FARM_CFRAME = CFrame.new(100, 3000, 800)
+local BIG_SIZE = Vector3.new(10, 10, 10)
+local ZERO_SIZE = Vector3.new(0, 0, 0)
+local TARGET_TRANSPARENCY = 0.9
+
+-- Lấy tham chiếu Workspace một lần cho nhanh
+local WS = game:GetService("Workspace")
+
 task.spawn(function()
     while task.wait(0.5) do
-        if _G.autocannon or _G.autocannonslow then
-            local enemiesFolder = Workspace:FindFirstChild("Enemies")
-            if enemiesFolder then
-                for _, enemy in ipairs(enemiesFolder:GetChildren()) do
-                    local name = enemy.Name
-                    local isTarget = false
-                    
-                    -- 2. Dùng string.find quét qua danh sách từ khóa
-                    for _, keyword in ipairs(targetKeywords) do
-                        if string.find(name, keyword) then
-                            isTarget = true
-                            break -- Tìm thấy từ khóa khớp là DỪNG QUÉT ngay cho nhẹ máy
-                        end
-                    end
-                    
-                    -- 3. Nếu đúng là quái cần farm thì lôi nó tới
-                    if isTarget then
-                        local hrp = enemy:FindFirstChild('HumanoidRootPart')
-                        local hum = enemy:FindFirstChild('Humanoid')
+        -- Đưa check bật/tắt lên đầu tiên. Nếu tool đang tắt thì dùng 'continue' bỏ qua toàn bộ vòng lặp
+        if not (_G.autocannon or _G.autocannonslow) then continue end
+        
+        local enemiesFolder = WS:FindFirstChild("Enemies")
+        if not enemiesFolder then continue end
+        
+        for _, enemy in ipairs(enemiesFolder:GetChildren()) do
+            local name = enemy.Name
+            local isTarget = false
+            
+            -- 2. Quét từ khóa
+            for _, keyword in ipairs(targetKeywords) do
+                if string.find(name, keyword) then
+                    isTarget = true
+                    break
+                end
+            end
+            
+            if isTarget then
+                local hrp = enemy:FindFirstChild('HumanoidRootPart')
+                local hum = enemy:FindFirstChild('Humanoid')
+                
+                if hrp and hum then
+                    if hum.Health <= 0 then
+                        if hrp.Size ~= ZERO_SIZE then hrp.Size = ZERO_SIZE end
+                        enemy:Destroy()
+                    else
+                        -- 3. [TỐI ƯU MẠNG & CPU] KIỂM TRA TRƯỚC KHI GÁN
+                        -- Việc gán liên tục (vd: Anchored = true) dù nó ĐÃ true rồi vẫn ép Roblox 
+                        -- phải tính toán lại vật lý và gửi cục data đó đi, gây lag ping.
+                        if hrp.CanCollide then hrp.CanCollide = false end
+                        if not hrp.Anchored then hrp.Anchored = true end
+                        if hrp.Size ~= BIG_SIZE then hrp.Size = BIG_SIZE end
                         
-                        if hrp and hum then
-                            if hum.Health <= 0 then
-                                hrp.Size = Vector3.new(0, 0, 0)
-                                enemy:Destroy()
-                            else
-                                hrp.CanCollide = false
-                                hrp.Size = Vector3.new(10, 10, 10)
-                                hrp.Anchored = true
-                                -- Chỉ set CFrame nếu rớt ra xa (Chống lag vật lý)
-                                if (hrp.Position - Vector3.new(100, 3000, 800)).Magnitude > 5 then
-                                    hrp.CFrame = CFrame.new(100, 3000, 800)
-                                end
-                                if string.find(name, "Crab") then hrp.Transparency = 0.9 end
+                        -- Dùng CFrame tĩnh thay vì tạo mới
+                        if (hrp.Position - FARM_POS).Magnitude > 5 then
+                            hrp.CFrame = FARM_CFRAME
+                        end
+                        
+                        -- 4. Tối ưu hàm string
+                        -- Phép toán dò chuỗi (string.find) tốn tài nguyên. Mình ép nó check Transparency trước. 
+                        -- Nếu con Crab đã tàng hình (0.9) rồi thì BỎ QUA luôn hàm string.find cho nhẹ CPU.
+                        if hrp.Transparency ~= TARGET_TRANSPARENCY then
+                            if string.find(name, "Crab") then 
+                                hrp.Transparency = TARGET_TRANSPARENCY 
                             end
                         end
                     end
