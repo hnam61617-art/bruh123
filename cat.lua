@@ -9,7 +9,7 @@ local isAutoEnabled = true
 local isForceRevive = false 
 local isProcessing = false 
 local hasHandledTalentThisRoom = false 
-local isXrayBannedForThisDoor = false -- Biến cờ khóa né tường khi đã vào sát bệ
+local isXrayBannedForThisDoor = false 
 
 local lastPosition = nil
 local TELEPORT_THRESHOLD = 20
@@ -43,12 +43,50 @@ screenGui.Name = "AbyssStrategyUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
+-- --- 1. NÚT ICON ẨN / HIỆN (CHO MOBILE) ---
+local toggleGuiBtn = Instance.new("TextButton")
+toggleGuiBtn.Size = UDim2.new(0, 40, 0, 40)
+toggleGuiBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+toggleGuiBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+toggleGuiBtn.Text = "⚙️"
+toggleGuiBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleGuiBtn.Font = Enum.Font.SourceSansBold
+toggleGuiBtn.TextSize = 18
+toggleGuiBtn.Parent = screenGui
+
+local iconCorner = Instance.new("UICorner")
+iconCorner.CornerRadius = UDim.new(0, 20) -- Làm nút tròn hẳn
+iconCorner.Parent = toggleGuiBtn
+
+-- Kéo thả nút Icon trên Mobile
+local iconDragging, iconDragStart, iconStartPos
+toggleGuiBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        iconDragging = true
+        iconDragStart = input.Position
+        iconStartPos = toggleGuiBtn.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then iconDragging = false end end)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if iconDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - iconDragStart
+        toggleGuiBtn.Position = UDim2.new(iconStartPos.X.Scale, iconStartPos.X.Offset + delta.X, iconStartPos.Y.Scale, iconStartPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- --- 2. MENU CHÍNH (ĐÃ THU NHỎ KÍCH THƯỚC) ---
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 450, 0, 450)
-mainFrame.Position = UDim2.new(0.05, 0, 0.2, 0) 
+mainFrame.Size = UDim2.new(0, 320, 0, 260) -- Giảm từ 450x450 thành 320x260
+mainFrame.Position = UDim2.new(0.1, 0, 0.2, 0) 
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 22, 28) 
 mainFrame.Active = true 
 mainFrame.Parent = screenGui
+
+-- Click nút Icon để Ẩn/Hiện Menu
+toggleGuiBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
 
 local mDragging, mDragInput, mDragStart, mStartPos
 mainFrame.InputBegan:Connect(function(input)
@@ -67,33 +105,33 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
-local uiCorner = Instance.new("UICorner") uiCorner.CornerRadius = UDim.new(0, 12) uiCorner.Parent = mainFrame
-local title = Instance.new("TextLabel") title.Size = UDim2.new(0.48, 0, 0, 50) title.Position = UDim2.new(0, 12, 0, 0) title.BackgroundTransparency = 1 title.Text = "⚙️ AUTO ABYSS" title.TextColor3 = Color3.fromRGB(0, 210, 255) title.TextSize = 12 title.Font = Enum.Font.SourceSansBold title.TextXAlignment = Enum.TextXAlignment.Left title.Parent = mainFrame
+local uiCorner = Instance.new("UICorner") uiCorner.CornerRadius = UDim.new(0, 10) uiCorner.Parent = mainFrame
+local title = Instance.new("TextLabel") title.Size = UDim2.new(0.4, 0, 0, 40) title.Position = UDim2.new(0, 10, 0, 0) title.BackgroundTransparency = 1 title.Text = "⚙️ AUTO ABYSS" title.TextColor3 = Color3.fromRGB(0, 210, 255) title.TextSize = 11 title.Font = Enum.Font.SourceSansBold title.TextXAlignment = Enum.TextXAlignment.Left title.Parent = mainFrame
 
-local reviveToggleBtn = Instance.new("TextButton") reviveToggleBtn.Size = UDim2.new(0, 110, 0, 30) reviveToggleBtn.Position = UDim2.new(0.5, 0, 0, 10) reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 40, 40) reviveToggleBtn.Text = "⚪ HỒI SINH: OFF" reviveToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) reviveToggleBtn.Font = Enum.Font.SourceSansBold reviveToggleBtn.TextSize = 11 reviveToggleBtn.Parent = mainFrame
-local reviveCorner = Instance.new("UICorner") reviveCorner.CornerRadius = UDim.new(0, 6) reviveCorner.Parent = reviveToggleBtn
+local reviveToggleBtn = Instance.new("TextButton") reviveToggleBtn.Size = UDim2.new(0, 85, 0, 26) reviveToggleBtn.Position = UDim2.new(0.43, 0, 0, 7) reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 40, 40) reviveToggleBtn.Text = "HS: OFF" reviveToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) reviveToggleBtn.Font = Enum.Font.SourceSansBold reviveToggleBtn.TextSize = 10 reviveToggleBtn.Parent = mainFrame
+local reviveCorner = Instance.new("UICorner") reviveCorner.CornerRadius = UDim.new(0, 5) reviveCorner.Parent = reviveToggleBtn
 
-local toggleBtn = Instance.new("TextButton") toggleBtn.Size = UDim2.new(0, 95, 0, 30) toggleBtn.Position = UDim2.new(0.76, 0, 0, 10) toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 90) toggleBtn.Text = "🔴 AUTO: ON" toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) toggleBtn.Font = Enum.Font.SourceSansBold toggleBtn.TextSize = 11 toggleBtn.Parent = mainFrame
-local toggleCorner = Instance.new("UICorner") toggleCorner.CornerRadius = UDim.new(0, 6) toggleCorner.Parent = toggleBtn
+local toggleBtn = Instance.new("TextButton") toggleBtn.Size = UDim2.new(0, 85, 0, 26) toggleBtn.Position = UDim2.new(0.71, 0, 0, 7) toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 90) toggleBtn.Text = "🔴 AUTO: ON" toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) toggleBtn.Font = Enum.Font.SourceSansBold toggleBtn.TextSize = 10 toggleBtn.Parent = mainFrame
+local toggleCorner = Instance.new("UICorner") toggleCorner.CornerRadius = UDim.new(0, 5) toggleCorner.Parent = toggleBtn
 
-local scrollFrame = Instance.new("ScrollingFrame") scrollFrame.Size = UDim2.new(1, -20, 1, -70) scrollFrame.Position = UDim2.new(0, 10, 0, 55) scrollFrame.BackgroundTransparency = 1 scrollFrame.ScrollBarThickness = 5 scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y scrollFrame.Parent = mainFrame
-local listLayout = Instance.new("UIListLayout") listLayout.Padding = UDim.new(0, 6) listLayout.Parent = scrollFrame
+local scrollFrame = Instance.new("ScrollingFrame") scrollFrame.Size = UDim2.new(1, -16, 1, -50) scrollFrame.Position = UDim2.new(0, 8, 0, 42) scrollFrame.BackgroundTransparency = 1 scrollFrame.ScrollBarThickness = 4 scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y scrollFrame.Parent = mainFrame
+local listLayout = Instance.new("UIListLayout") listLayout.Padding = UDim.new(0, 4) listLayout.Parent = scrollFrame
 
 local function createMatchupRow(item1, item2)
     local ruleKey = item1 .. " VS " .. item2
     MatchupRules[ruleKey] = item1 
 
-    local row = Instance.new("Frame") row.Size = UDim2.new(1, -10, 0, 45) row.BackgroundColor3 = Color3.fromRGB(30, 33, 43) row.Parent = scrollFrame
-    local rc = Instance.new("UICorner") rc.CornerRadius = UDim.new(0, 8) rc.Parent = row
+    local row = Instance.new("Frame") row.Size = UDim2.new(1, -6, 0, 34) row.BackgroundColor3 = Color3.fromRGB(30, 33, 43) row.Parent = scrollFrame
+    local rc = Instance.new("UICorner") rc.CornerRadius = UDim.new(0, 6) rc.Parent = row
 
-    local textLabel = Instance.new("TextLabel") textLabel.Size = UDim2.new(0.6, 0, 1, 0) textLabel.Position = UDim2.new(0, 12, 0, 0) textLabel.BackgroundTransparency = 1
-    textLabel.Text = string.format("<font color='#ffaa00'>%s</font> <font color='#ffffff'>vs</font> <font color='#00aaff'>%s</font>", item1, item2)
-    textLabel.TextColor3 = Color3.fromRGB(225, 225, 225) textLabel.TextSize = 13 textLabel.Font = Enum.Font.SourceSansBold textLabel.RichText = true textLabel.TextXAlignment = Enum.TextXAlignment.Left textLabel.Parent = row
+    local textLabel = Instance.new("TextLabel") textLabel.Size = UDim2.new(0.55, 0, 1, 0) textLabel.Position = UDim2.new(0, 8, 0, 0) textLabel.BackgroundTransparency = 1
+    textLabel.Text = string.format("<font color='#ffaa00'>%s</font> <font color='#ffffff'>v</font> <font color='#00aaff'>%s</font>", item1, item2)
+    textLabel.TextColor3 = Color3.fromRGB(225, 225, 225) textLabel.TextSize = 10 textLabel.Font = Enum.Font.SourceSansBold textLabel.RichText = true textLabel.TextXAlignment = Enum.TextXAlignment.Left textLabel.Parent = row
 
-    local btnLeft = Instance.new("TextButton") btnLeft.Size = UDim2.new(0, 65, 0, 28) btnLeft.Position = UDim2.new(0.63, 0, 0.2, 0) btnLeft.BackgroundColor3 = Color3.fromRGB(0, 150, 100) btnLeft.Text = "Chọn 1" btnLeft.TextColor3 = Color3.fromRGB(255, 255, 255) btnLeft.Font = Enum.Font.SourceSansBold btnLeft.TextSize = 12 btnLeft.Parent = row
-    local btnRight = Instance.new("TextButton") btnRight.Size = UDim2.new(0, 65, 0, 28) btnRight.Position = UDim2.new(0.82, 0, 0.2, 0) btnRight.BackgroundColor3 = Color3.fromRGB(70, 75, 85) btnRight.Text = "Chọn 2" btnRight.TextColor3 = Color3.fromRGB(200, 200, 200) btnRight.Font = Enum.Font.SourceSansBold btnRight.TextSize = 12 btnRight.Parent = row
-    Instance.new("UICorner", btnLeft).CornerRadius = UDim.new(0, 6)
-    Instance.new("UICorner", btnRight).CornerRadius = UDim.new(0, 6)
+    local btnLeft = Instance.new("TextButton") btnLeft.Size = UDim2.new(0, 54, 0, 22) btnLeft.Position = UDim2.new(0.58, 0, 0.18, 0) btnLeft.BackgroundColor3 = Color3.fromRGB(0, 150, 100) btnLeft.Text = "Chọn 1" btnLeft.TextColor3 = Color3.fromRGB(255, 255, 255) btnLeft.Font = Enum.Font.SourceSansBold btnLeft.TextSize = 10 btnLeft.Parent = row
+    local btnRight = Instance.new("TextButton") btnRight.Size = UDim2.new(0, 54, 0, 22) btnRight.Position = UDim2.new(0.79, 0, 0.18, 0) btnRight.BackgroundColor3 = Color3.fromRGB(70, 75, 85) btnRight.Text = "Chọn 2" btnRight.TextColor3 = Color3.fromRGB(200, 200, 200) btnRight.Font = Enum.Font.SourceSansBold btnRight.TextSize = 10 btnRight.Parent = row
+    Instance.new("UICorner", btnLeft).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", btnRight).CornerRadius = UDim.new(0, 4)
 
     btnLeft.MouseButton1Click:Connect(function()
         MatchupRules[ruleKey] = item1
@@ -120,9 +158,9 @@ createMatchupRow("Quả EXP", "Đá Pet Xanh Dương")
 reviveToggleBtn.MouseButton1Click:Connect(function()
     isForceRevive = not isForceRevive
     if isForceRevive then
-        reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 90) reviveToggleBtn.Text = "HỒI SINH: ON"
+        reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 90) reviveToggleBtn.Text = "HS: ON"
     else
-        reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 40, 40) reviveToggleBtn.Text = "HỒI SINH: OFF"
+        reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 40, 40) reviveToggleBtn.Text = "HS: OFF"
     end
 end)
 
@@ -187,7 +225,6 @@ local function walkToTarget(targetPosition, targetInstance)
             if not rootPart or not humanoid then break end
             local distanceToTarget = (rootPart.Position - targetPosition).Magnitude
             
-            -- Nếu khoảng cách > 15 studs VÀ chưa bị khóa né, tiến hành quét chướng ngại vật
             if distanceToTarget > 15 and not isXrayBannedForThisDoor then
                 if not isAvoiding and currentXrayLoopActive then
                     local forwardRay = rootPart.CFrame.LookVector * 3.5
@@ -222,7 +259,6 @@ local function walkToTarget(targetPosition, targetInstance)
                     end
                 end
             else
-                -- Khi lọt vào vùng <= 15 studs, kích hoạt cờ khóa né vĩnh viễn cho bệ hiện tại
                 if not isXrayBannedForThisDoor and distanceToTarget <= 10 then
                     isXrayBannedForThisDoor = true
                     warn("🎯 Nhân vật lọt vào vùng 15 studs! Tắt hoàn toàn né tường để đi thẳng vào bệ.")
@@ -245,7 +281,6 @@ task.spawn(function()
                 if lastPosition then
                     local distance = (currentPos - lastPosition).Magnitude
                     if distance > TELEPORT_THRESHOLD then
-                        -- Khi Teleport sang phòng mới -> Reset tất cả trạng thái và mở lại hệ thống né tường
                         isProcessing = false 
                         hasHandledTalentThisRoom = false 
                         currentXrayLoopActive = false 
@@ -276,7 +311,6 @@ local function coreAutoSystem()
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if not rootPart or not humanoid then return end
 
-    -- --- 1. ĐƯỜNG DẪN CHUẨN TỚI ABYSS TALENT ---
     local abyssTalent = Workspace:FindFirstChild("AbyssTalent")
     if abyssTalent and not hasHandledTalentThisRoom then
         isProcessing = true
@@ -302,7 +336,6 @@ local function coreAutoSystem()
         return
     end
 
-    -- --- 2. ĐƯỜNG DẪN CHUẨN TỚI HỆ THỐNG CỬA ---
     local clientModel = getAbyssClientModel()
     if not clientModel then return end
 
