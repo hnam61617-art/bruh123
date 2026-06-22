@@ -41,24 +41,26 @@ end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AbyssStrategyUI"
 screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = player.PlayerGui
 
--- --- 1. NÚT ICON ẨN / HIỆN (CHO MOBILE) ---
+-- --- 1. NÚT ICON ẨN / HIỆN (HIỂN THỊ RÕ TRÊN MOBILE) ---
 local toggleGuiBtn = Instance.new("TextButton")
-toggleGuiBtn.Size = UDim2.new(0, 40, 0, 40)
-toggleGuiBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
-toggleGuiBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+toggleGuiBtn.Size = UDim2.new(0, 45, 0, 45)
+toggleGuiBtn.Position = UDim2.new(0.05, 0, 0.35, 0) -- Nằm bên rìa trái, dịch xuống một chút để dễ thấy
+toggleGuiBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 toggleGuiBtn.Text = "⚙️"
 toggleGuiBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleGuiBtn.Font = Enum.Font.SourceSansBold
-toggleGuiBtn.TextSize = 18
+toggleGuiBtn.TextSize = 22
+toggleGuiBtn.ZIndex = 10 -- Đảm bảo luôn nằm trên cùng
 toggleGuiBtn.Parent = screenGui
 
 local iconCorner = Instance.new("UICorner")
-iconCorner.CornerRadius = UDim.new(0, 20) -- Làm nút tròn hẳn
+iconCorner.CornerRadius = UDim.new(0, 22)
 iconCorner.Parent = toggleGuiBtn
 
--- Kéo thả nút Icon trên Mobile
+-- Hệ thống kéo thả nút Icon bằng cảm ứng (Mobile Touch)
 local iconDragging, iconDragStart, iconStartPos
 toggleGuiBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -75,15 +77,16 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- --- 2. MENU CHÍNH (ĐÃ THU NHỎ KÍCH THƯỚC) ---
+-- --- 2. MENU CHÍNH (THU NHỎ CHO MOBILE) ---
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 260) -- Giảm từ 450x450 thành 320x260
-mainFrame.Position = UDim2.new(0.1, 0, 0.2, 0) 
+mainFrame.Size = UDim2.new(0, 310, 0, 250)
+mainFrame.Position = UDim2.new(0.15, 0, 0.2, 0) 
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 22, 28) 
 mainFrame.Active = true 
+mainFrame.ZIndex = 5
 mainFrame.Parent = screenGui
 
--- Click nút Icon để Ẩn/Hiện Menu
+-- Bấm nút Icon để Ẩn/Hiện Menu
 toggleGuiBtn.MouseButton1Click:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
 end)
@@ -108,10 +111,10 @@ end)
 local uiCorner = Instance.new("UICorner") uiCorner.CornerRadius = UDim.new(0, 10) uiCorner.Parent = mainFrame
 local title = Instance.new("TextLabel") title.Size = UDim2.new(0.4, 0, 0, 40) title.Position = UDim2.new(0, 10, 0, 0) title.BackgroundTransparency = 1 title.Text = "⚙️ AUTO ABYSS" title.TextColor3 = Color3.fromRGB(0, 210, 255) title.TextSize = 11 title.Font = Enum.Font.SourceSansBold title.TextXAlignment = Enum.TextXAlignment.Left title.Parent = mainFrame
 
-local reviveToggleBtn = Instance.new("TextButton") reviveToggleBtn.Size = UDim2.new(0, 85, 0, 26) reviveToggleBtn.Position = UDim2.new(0.43, 0, 0, 7) reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 40, 40) reviveToggleBtn.Text = "HS: OFF" reviveToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) reviveToggleBtn.Font = Enum.Font.SourceSansBold reviveToggleBtn.TextSize = 10 reviveToggleBtn.Parent = mainFrame
+local reviveToggleBtn = Instance.new("TextButton") reviveToggleBtn.Size = UDim2.new(0, 80, 0, 26) reviveToggleBtn.Position = UDim2.new(0.43, 0, 0, 7) reviveToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 40, 40) reviveToggleBtn.Text = "HS: OFF" reviveToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) reviveToggleBtn.Font = Enum.Font.SourceSansBold reviveToggleBtn.TextSize = 10 reviveToggleBtn.Parent = mainFrame
 local reviveCorner = Instance.new("UICorner") reviveCorner.CornerRadius = UDim.new(0, 5) reviveCorner.Parent = reviveToggleBtn
 
-local toggleBtn = Instance.new("TextButton") toggleBtn.Size = UDim2.new(0, 85, 0, 26) toggleBtn.Position = UDim2.new(0.71, 0, 0, 7) toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 90) toggleBtn.Text = "🔴 AUTO: ON" toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) toggleBtn.Font = Enum.Font.SourceSansBold toggleBtn.TextSize = 10 toggleBtn.Parent = mainFrame
+local toggleBtn = Instance.new("TextButton") toggleBtn.Size = UDim2.new(0, 80, 0, 26) toggleBtn.Position = UDim2.new(0.72, 0, 0, 7) toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 90) toggleBtn.Text = "🔴 AUTO: ON" toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255) toggleBtn.Font = Enum.Font.SourceSansBold toggleBtn.TextSize = 10 toggleBtn.Parent = mainFrame
 local toggleCorner = Instance.new("UICorner") toggleCorner.CornerRadius = UDim.new(0, 5) toggleCorner.Parent = toggleBtn
 
 local scrollFrame = Instance.new("ScrollingFrame") scrollFrame.Size = UDim2.new(1, -16, 1, -50) scrollFrame.Position = UDim2.new(0, 8, 0, 42) scrollFrame.BackgroundTransparency = 1 scrollFrame.ScrollBarThickness = 4 scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y scrollFrame.Parent = mainFrame
@@ -128,8 +131,8 @@ local function createMatchupRow(item1, item2)
     textLabel.Text = string.format("<font color='#ffaa00'>%s</font> <font color='#ffffff'>v</font> <font color='#00aaff'>%s</font>", item1, item2)
     textLabel.TextColor3 = Color3.fromRGB(225, 225, 225) textLabel.TextSize = 10 textLabel.Font = Enum.Font.SourceSansBold textLabel.RichText = true textLabel.TextXAlignment = Enum.TextXAlignment.Left textLabel.Parent = row
 
-    local btnLeft = Instance.new("TextButton") btnLeft.Size = UDim2.new(0, 54, 0, 22) btnLeft.Position = UDim2.new(0.58, 0, 0.18, 0) btnLeft.BackgroundColor3 = Color3.fromRGB(0, 150, 100) btnLeft.Text = "Chọn 1" btnLeft.TextColor3 = Color3.fromRGB(255, 255, 255) btnLeft.Font = Enum.Font.SourceSansBold btnLeft.TextSize = 10 btnLeft.Parent = row
-    local btnRight = Instance.new("TextButton") btnRight.Size = UDim2.new(0, 54, 0, 22) btnRight.Position = UDim2.new(0.79, 0, 0.18, 0) btnRight.BackgroundColor3 = Color3.fromRGB(70, 75, 85) btnRight.Text = "Chọn 2" btnRight.TextColor3 = Color3.fromRGB(200, 200, 200) btnRight.Font = Enum.Font.SourceSansBold btnRight.TextSize = 10 btnRight.Parent = row
+    local btnLeft = Instance.new("TextButton") btnLeft.Size = UDim2.new(0, 52, 0, 22) btnLeft.Position = UDim2.new(0.58, 0, 0.18, 0) btnLeft.BackgroundColor3 = Color3.fromRGB(0, 150, 100) btnLeft.Text = "Chọn 1" btnLeft.TextColor3 = Color3.fromRGB(255, 255, 255) btnLeft.Font = Enum.Font.SourceSansBold btnLeft.TextSize = 10 btnLeft.Parent = row
+    local btnRight = Instance.new("TextButton") btnRight.Size = UDim2.new(0, 52, 0, 22) btnRight.Position = UDim2.new(0.79, 0, 0.18, 0) btnRight.BackgroundColor3 = Color3.fromRGB(70, 75, 85) btnRight.Text = "Chọn 2" btnRight.TextColor3 = Color3.fromRGB(200, 200, 200) btnRight.Font = Enum.Font.SourceSansBold btnRight.TextSize = 10 btnRight.Parent = row
     Instance.new("UICorner", btnLeft).CornerRadius = UDim.new(0, 4)
     Instance.new("UICorner", btnRight).CornerRadius = UDim.new(0, 4)
 
